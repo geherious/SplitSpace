@@ -1,0 +1,97 @@
+services:
+  # Auth Service Database
+  auth-service-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_secret_2024
+    volumes:
+      - pgdata-auth:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ../AuthService
+      dockerfile: Dockerfile
+    environment:
+      - AUTH_SERVICE_DB_CONNECTION_STRING=Host=auth-service-db;Port=5432;Database=auth_db;Username=auth_user;Password=auth_secret_2024
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "5001:5000"
+    depends_on:
+      - auth-service-db
+
+  # Space Service Database
+  space-service-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: space_db
+      POSTGRES_USER: space_user
+      POSTGRES_PASSWORD: space_secret_2024
+    volumes:
+      - pgdata-space:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  # Space Service
+  space-service:
+    build:
+      context: ../SpaceService
+      dockerfile: Dockerfile
+    environment:
+      - SPACE_SERVICE_DB_CONNECTION_STRING=Host=space-service-db;Port=5432;Database=space_db;Username=space_user;Password=space_secret_2024
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "5002:80"
+    depends_on:
+      - space-service-db
+
+  # Finance Service Database
+  finance-service-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: finance_db
+      POSTGRES_USER: finance_user
+      POSTGRES_PASSWORD: finance_secret_2024
+    volumes:
+      - pgdata-finance:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+
+  # Finance Service
+  finance-service:
+    build:
+      context: ../FinanceService
+      dockerfile: Dockerfile
+    environment:
+      - FINANCE_SERVICE_DB_CONNECTION_STRING=Host=finance-service-db;Port=5432;Database=finance_db;Username=finance_user;Password=finance_secret_2024
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "5003:80"
+    depends_on:
+      - finance-service-db
+
+  # ApiGateway (no database - just routing)
+  api-gateway:
+    build:
+      context: ../ApiGateway
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - AUTH_SERVICE_URL=http://auth-service:5001
+      - SPACE_SERVICE_URL=http://space-service:5002
+      - FINANCE_SERVICE_URL=http://finance-service:5003
+    ports:
+      - "5004:80"
+    depends_on:
+      - auth-service
+      - space-service
+      - finance-service
+
+volumes:
+  pgdata-auth:
+  pgdata-space:
+  pgdata-finance:

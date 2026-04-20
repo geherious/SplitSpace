@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <!-- Debug Settings -->
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    
+    <!-- Documentation Generation -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+</Project>
