@@ -1,13 +1,12 @@
 using Grpc.Core;
-using SplitSpace.AuthService.Api;
-using SplitSpace.AuthService.Common.Models;
-using SplitSpace.AuthService.Common.Models.Commands;
+using SplitSpace.AuthService.Api.AuthService;
 using SplitSpace.AuthService.Helpers;
+using SplitSpace.AuthService.Logic.Models.Commands;
 using SplitSpace.AuthService.Logic.Services;
 
 namespace SplitSpace.AuthService.Services;
 
-public class AuthServiceGrpc : Api.AuthService.AuthServiceBase
+public class AuthServiceGrpc : Api.AuthService.AuthService.AuthServiceBase
 {
     private readonly IAuthService _authService;
 

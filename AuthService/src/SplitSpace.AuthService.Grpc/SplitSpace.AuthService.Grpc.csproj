@@ -15,10 +15,6 @@
               AdditionalImportDirs="Protos" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Protos\SplitSpace\" />
-  </ItemGroup>
-
   <PropertyGroup>
     <IncludeHttpRuleProtos>true</IncludeHttpRuleProtos>
   </PropertyGroup>

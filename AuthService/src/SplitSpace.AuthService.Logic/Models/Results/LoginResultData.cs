@@ -1,4 +1,4 @@
-namespace SplitSpace.AuthService.Common.Models.Results;
+namespace SplitSpace.AuthService.Logic.Models.Results;
 
 public record LoginResultData(
     Guid UserId,

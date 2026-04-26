@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package SplitSpace.AuthService;
 
-option csharp_namespace = "SplitSpace.AuthService.Api";
+option csharp_namespace = "SplitSpace.AuthService.Api.AuthService";
 
 import "google/api/annotations.proto";
 

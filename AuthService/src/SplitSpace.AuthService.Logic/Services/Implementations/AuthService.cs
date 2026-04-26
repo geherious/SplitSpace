@@ -1,10 +1,10 @@
 using System.Security.Claims;
 using SplitSpace.AuthService.Common.Constants;
 using SplitSpace.AuthService.Common.Models;
-using SplitSpace.AuthService.Common.Models.Commands;
-using SplitSpace.AuthService.Common.Models.Results;
 using SplitSpace.AuthService.Dal.Models.Entities;
 using SplitSpace.AuthService.Dal.Repositories;
+using SplitSpace.AuthService.Logic.Models.Commands;
+using SplitSpace.AuthService.Logic.Models.Results;
 
 namespace SplitSpace.AuthService.Logic.Services.Implementations;
 

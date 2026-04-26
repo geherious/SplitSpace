@@ -11,6 +11,7 @@ public static class ServiceCollectionExtensions
     public static void AddServices(this IServiceCollection serviceCollection)
     {
         serviceCollection.AddScoped<IAuthService, Services.Implementations.AuthService>();
+        serviceCollection.AddScoped<IUserService, UserService>();
         serviceCollection.AddScoped<ITokenService, TokenService>();
         serviceCollection.AddScoped<PasswordHasher>();
     }

@@ -18,6 +18,7 @@ public class AuthServiceDbContext : DbContext
             ?? "Host=localhost;Database=auth_db;Username=postgres;Password=postgres";
 
         optionsBuilder.UseNpgsql(connectionString);
+        optionsBuilder.UseSnakeCaseNamingConvention();
     }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)

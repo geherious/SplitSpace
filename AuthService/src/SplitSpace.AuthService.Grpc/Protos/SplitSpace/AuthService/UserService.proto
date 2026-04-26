@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package SplitSpace.AuthService;
+
+option csharp_namespace = "SplitSpace.AuthService.Api.UserService";
+
+import "google/api/annotations.proto";
+import "google/protobuf/wrappers.proto";
+
+service UserService {
+  rpc Exist(ExistRequest) returns (ExistResponse) {
+    option (google.api.http) = {
+      post: "/v1/user/exist"
+      body: "*"
+    };
+  }
+}
+
+message ExistRequest {
+  string email = 1;
+}
+
+message ExistResponse {
+  google.protobuf.StringValue user_id = 1;
+}

@@ -1,7 +1,7 @@
 using SplitSpace.AuthService.Common;
 using SplitSpace.AuthService.Common.Models;
-using SplitSpace.AuthService.Common.Models.Commands;
-using SplitSpace.AuthService.Common.Models.Results;
+using SplitSpace.AuthService.Logic.Models.Commands;
+using SplitSpace.AuthService.Logic.Models.Results;
 
 namespace SplitSpace.AuthService.Logic.Services;
 
