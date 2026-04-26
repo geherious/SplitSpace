@@ -13,15 +13,20 @@ service AuthService {
       body: "*"
     };
   }
-  rpc Login(LoginRequest) returns (LoginResponse){
+  rpc Login(LoginRequest) returns (LoginResponse) {
     option (google.api.http) = {
       post: "/v1/login"
       body: "*"
     };
   }
-  rpc RefreshTokens(RefreshTokenRequest) returns (RefreshTokenResponse){
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
     option (google.api.http) = {
       post: "/v1/refresh"
+      body: "*"
+    };
+  }  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/validate"
       body: "*"
     };
   }
@@ -56,4 +61,12 @@ message RefreshTokenRequest {
 message RefreshTokenResponse {
   string access_token = 1;
   string refresh_token = 2;
+}
+
+message ValidateTokenRequest {
+  string access_token = 1;
+}
+
+message ValidateTokenResponse {
+  string user_id = 1;
 }

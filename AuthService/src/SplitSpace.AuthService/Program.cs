@@ -26,7 +26,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.MapGrpcService<AuthServiceGrpcBase>();
+app.MapGrpcService<AuthServiceGrpc>();
 app.MapGrpcReflectionService();
 
 using var scope = app.Services.CreateScope();

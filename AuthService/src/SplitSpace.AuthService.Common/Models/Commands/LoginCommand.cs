@@ -1,4 +1,4 @@
-namespace SplitSpace.AuthService.Common.Models;
+namespace SplitSpace.AuthService.Common.Models.Commands;
 
 public record LoginCommand(
     string Email,

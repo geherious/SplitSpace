@@ -1,4 +1,8 @@
+using System.Security.Claims;
+using SplitSpace.AuthService.Common.Constants;
 using SplitSpace.AuthService.Common.Models;
+using SplitSpace.AuthService.Common.Models.Commands;
+using SplitSpace.AuthService.Common.Models.Results;
 using SplitSpace.AuthService.Dal.Models.Entities;
 using SplitSpace.AuthService.Dal.Repositories;
 
@@ -8,22 +12,22 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
-    private readonly IJwtCreator _jwtCreator;
+    private readonly ITokenService _tokenService;
     private readonly PasswordHasher _passwordHasher;
 
     public AuthService(
         IUserRepository userRepository,
         IRefreshTokenRepository refreshTokenRepository,
-        IJwtCreator jwtCreator,
+        ITokenService tokenService,
         PasswordHasher passwordHasher)
     {
         _userRepository = userRepository;
         _refreshTokenRepository = refreshTokenRepository;
-        _jwtCreator = jwtCreator;
+        _tokenService = tokenService;
         _passwordHasher = passwordHasher;
     }
 
-    public async Task<Result<RegisterResultData>> Register(RegisterCommand command)
+    public async Task<Result<RegisterResultData>> RegisterAsync(RegisterCommand command)
     {
         var errors = new List<Error>();
 
@@ -67,18 +71,21 @@ public class AuthService : IAuthService
 
         // Hash password and create user
         var hashedPassword = _passwordHasher.Hash(command.Password);
+        var currentTime = DateTime.UtcNow;
         var user = new User
         {
+            Id = Guid.CreateVersion7(),
             Email = command.Email,
             PasswordHash = hashedPassword,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = currentTime,
+            LastLogin = currentTime
         };
 
         await _userRepository.CreateUserAsync(user);
 
         // Create tokens
-        var accessToken = _jwtCreator.CreateAccessToken(user.Id);
-        var refreshToken = _jwtCreator.CreateRefreshToken(user.Id);
+        var accessToken = CreateAccessToken(user.Id);
+        var refreshToken = _tokenService.CreateRefreshToken(user.Id);
 
         await _refreshTokenRepository.CreateRefreshTokenAsync(refreshToken);
 
@@ -88,7 +95,7 @@ public class AuthService : IAuthService
             refreshToken.Token));
     }
 
-    public async Task<Result<LoginResultData>> Login(LoginCommand command)
+    public async Task<Result<LoginResultData>> LoginAsync(LoginCommand command)
     {
         var errors = new List<Error>();
 
@@ -113,7 +120,7 @@ public class AuthService : IAuthService
             errors.Add(new Error
             {
                 Type = ErrorType.Unauthenticated,
-                Code = "USER_NOT_FOUND",
+                Code = "INVALID_CREDENTIALS",
                 Message = "Invalid email or password"
             });
             return Result<LoginResultData>.Failure(errors);
@@ -125,7 +132,7 @@ public class AuthService : IAuthService
             errors.Add(new Error
             {
                 Type = ErrorType.Unauthenticated,
-                Code = "INVALID_PASSWORD",
+                Code = "INVALID_CREDENTIALS",
                 Message = "Invalid email or password"
             });
             return Result<LoginResultData>.Failure(errors);
@@ -138,8 +145,8 @@ public class AuthService : IAuthService
         await _userRepository.UpdateLastLoginAsync(user.Id);
 
         // Create new tokens
-        var accessToken = _jwtCreator.CreateAccessToken(user.Id);
-        var refreshToken = _jwtCreator.CreateRefreshToken(user.Id);
+        var accessToken = CreateAccessToken(user.Id);
+        var refreshToken = _tokenService.CreateRefreshToken(user.Id);
         
         await _refreshTokenRepository.CreateRefreshTokenAsync(refreshToken);
 
@@ -149,11 +156,10 @@ public class AuthService : IAuthService
             refreshToken.Token));
     }
 
-    public async Task<Result<RefreshTokensResultData>> RefreshTokens(RefreshTokensCommand command)
+    public async Task<Result<RefreshTokensResultData>> RefreshTokenAsync(RefreshTokensCommand command)
     {
         var errors = new List<Error>();
 
-        // Validate refresh token format (basic check)
         if (string.IsNullOrEmpty(command.RefreshToken))
         {
             errors.Add(new Error
@@ -166,18 +172,6 @@ public class AuthService : IAuthService
 
         if (errors.Any())
             return Result<RefreshTokensResultData>.Failure(errors);
-
-        // Validate refresh token signature
-        if (!_jwtCreator.ValidateRefreshToken(command.RefreshToken))
-        {
-            errors.Add(new Error
-            {
-                Type = ErrorType.Unauthenticated,
-                Code = "INVALID_REFRESH_TOKEN",
-                Message = "Refresh token is invalid"
-            });
-            return Result<RefreshTokensResultData>.Failure(errors);
-        }
 
         // Get the refresh token from database
         var refreshToken = await _refreshTokenRepository.GetByTokenAsync(command.RefreshToken);
@@ -197,8 +191,8 @@ public class AuthService : IAuthService
         await _refreshTokenRepository.RevokeRefreshTokenAsync(refreshToken.Id);
 
         // Create new tokens for the same user
-        var newAccessToken = _jwtCreator.CreateAccessToken(refreshToken.UserId);
-        var newRefreshToken = _jwtCreator.CreateRefreshToken(refreshToken.UserId);
+        var newAccessToken = CreateAccessToken(refreshToken.UserId);
+        var newRefreshToken = _tokenService.CreateRefreshToken(refreshToken.UserId);
         
         await _refreshTokenRepository.CreateRefreshTokenAsync(newRefreshToken);
 
@@ -207,7 +201,38 @@ public class AuthService : IAuthService
             newRefreshToken.Token));
     }
 
-    private bool IsValidEmail(string email)
+    public Task<Result<ValidateTokenResultData>> ValidateTokenAsync(ValidateTokenCommand command)
+    {
+        var claimsPrincipal = _tokenService.ValidateAccessToken(command.AccessToken);
+
+        if (claimsPrincipal is null)
+        {
+            var error = Result<ValidateTokenResultData>.Failure(new Error
+            {
+                Type = ErrorType.Unauthenticated,
+                Message = "Invalid access token"
+            });
+            return Task.FromResult(error);
+        }
+        
+        var userIdClaim = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == RegisteredJwtClaims.Sub);
+
+        if (userIdClaim is null)
+        {
+            throw new ArgumentException("User id claim is null");
+        }
+        
+        if (string.IsNullOrEmpty(userIdClaim.Value) ||
+            Guid.TryParse(userIdClaim.Value, out var userId) is false)
+        {
+            throw new ArgumentException("User id of access token is invalid");
+        }
+
+        var result = Result<ValidateTokenResultData>.Success(new ValidateTokenResultData(userId));
+        return Task.FromResult(result);
+    }
+
+    private static bool IsValidEmail(string email)
     {
         try
         {
@@ -227,5 +252,17 @@ public class AuthService : IAuthService
         {
             await _refreshTokenRepository.RevokeRefreshTokenAsync(token.Id);
         }
+    }
+
+    private string CreateAccessToken(Guid userId)
+    {
+        var accessTokenClaims = new List<Claim>
+        {
+            new(RegisteredJwtClaims.Sub, userId.ToString()),
+            new(RegisteredJwtClaims.Jti, Guid.NewGuid().ToString()),
+        };
+        
+        var accessToken = _tokenService.CreateAccessToken(accessTokenClaims);
+        return accessToken;
     }
 }

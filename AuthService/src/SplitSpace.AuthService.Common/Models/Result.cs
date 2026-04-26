@@ -21,4 +21,5 @@ public class Result<T>
     public static Result<T> Success(T value) => new(true, [], value);
 
     public static Result<T> Failure(List<Error> errors) => new(false, errors, default);
+    public static Result<T> Failure(Error error) => new(false, [error], default);
 }

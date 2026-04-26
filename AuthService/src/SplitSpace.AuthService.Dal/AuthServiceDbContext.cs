@@ -44,6 +44,11 @@ public class AuthServiceDbContext : DbContext
             
             entity.HasIndex(e => e.Token)
                 .IsUnique();
+
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasIndex(e => e.UserId);
         });

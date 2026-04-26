@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SplitSpace.AuthService.Dal;
@@ -11,9 +12,11 @@ using SplitSpace.AuthService.Dal;
 namespace SplitSpace.AuthService.Dal.Migrations
 {
     [DbContext(typeof(AuthServiceDbContext))]
-    partial class AuthServiceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260426074729_AddForeignKeys")]
+    partial class AddForeignKeys
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

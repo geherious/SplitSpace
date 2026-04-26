@@ -1,4 +1,4 @@
-namespace SplitSpace.AuthService.Common.Models;
+namespace SplitSpace.AuthService.Common.Models.Results;
 
 public record RegisterResultData(
     Guid UserId,

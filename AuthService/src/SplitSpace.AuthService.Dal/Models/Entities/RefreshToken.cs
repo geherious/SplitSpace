@@ -2,9 +2,9 @@ namespace SplitSpace.AuthService.Dal.Models.Entities;
 
 public record RefreshToken
 {
-    public Guid Id { get; set; }
-    public Guid UserId { get; set; }
-    public string Token { get; set; } = string.Empty;
-    public DateTime ExpiresAt { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public required Guid Id { get; init; }
+    public required Guid UserId { get; init; }
+    public required string Token { get; init; }
+    public required DateTimeOffset ExpiresAt { get; init; }
+    public required DateTimeOffset CreatedAt { get; init; }
 }

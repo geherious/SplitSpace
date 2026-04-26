@@ -1,11 +1,14 @@
 using SplitSpace.AuthService.Common;
 using SplitSpace.AuthService.Common.Models;
+using SplitSpace.AuthService.Common.Models.Commands;
+using SplitSpace.AuthService.Common.Models.Results;
 
 namespace SplitSpace.AuthService.Logic.Services;
 
 public interface IAuthService
 {
-    Task<Result<RegisterResultData>> Register(RegisterCommand command);
-    Task<Result<LoginResultData>> Login(LoginCommand command);
-    Task<Result<RefreshTokensResultData>> RefreshTokens(RefreshTokensCommand command);
+    Task<Result<RegisterResultData>> RegisterAsync(RegisterCommand command);
+    Task<Result<LoginResultData>> LoginAsync(LoginCommand command);
+    Task<Result<RefreshTokensResultData>> RefreshTokenAsync(RefreshTokensCommand command);
+    Task<Result<ValidateTokenResultData>> ValidateTokenAsync(ValidateTokenCommand command);
 }
