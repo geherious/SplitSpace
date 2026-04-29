@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <RootNamespace>SplitSpace.AuthService.Grpc</RootNamespace>
+    <RootNamespace>SplitSpace.SpaceService.Grpc</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,8 +11,9 @@
 
   <ItemGroup>
     <Protobuf Include="Protos\SplitSpace\**\*.proto"
-              GrpcServices="Server"
-              AdditionalImportDirs="Protos"/>
+              GrpcServices="Both"
+              AdditionalImportDirs="Protos"
+              AdditionalImportArgs="--csharp_opt=nullable=on"/>
   </ItemGroup>
 
   <PropertyGroup>

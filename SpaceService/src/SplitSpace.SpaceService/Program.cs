@@ -1,6 +1,6 @@
-using SplitSpace.AuthService.Dal;
-using SplitSpace.AuthService.Logic;
-using SplitSpace.AuthService.Services;
+using SplitSpace.SpaceService.Dal;
+using SplitSpace.SpaceService.Logic;
+using SplitSpace.SpaceService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,8 +11,8 @@ builder.Services.AddGrpcSwagger();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDatabase();
-builder.Services.AddServiceOptions(builder.Configuration);
+builder.Services.AddRepositories();
+builder.Services.AddClientFacades();
 builder.Services.AddServices();
 
 builder.WebHost.ConfigureKestrel(options =>
@@ -26,12 +26,15 @@ builder.WebHost.ConfigureKestrel(options =>
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-app.MapGrpcService<AuthServiceGrpc>();
-app.MapGrpcService<UserServiceGrpc>();
-app.MapGrpcReflectionService();
+app.MapGrpcService<SpaceServiceGrpc>();
+app.MapGrpcService<InvitationServiceGrpc>();
 
 using var scope = app.Services.CreateScope();
 var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();

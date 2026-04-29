@@ -10,6 +10,12 @@ services:
       - pgdata-auth:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "auth_user", "-d", "auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   # Auth Service
   auth-service:
@@ -20,9 +26,11 @@ services:
       - AUTH_SERVICE_DB_CONNECTION_STRING=Host=auth-service-db;Port=5432;Database=auth_db;Username=auth_user;Password=auth_secret_2024
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
-      - "5001:5000"
+      - "5102:5002"
+      - "5104:5004"
     depends_on:
-      - auth-service-db
+      auth-service-db:
+        condition: service_healthy
 
   # Space Service Database
   space-service-db:
@@ -35,6 +43,12 @@ services:
       - pgdata-space:/var/lib/postgresql/data
     ports:
       - "5433:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "space_user", "-d", "space_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   # Space Service
   space-service:
@@ -45,9 +59,11 @@ services:
       - SPACE_SERVICE_DB_CONNECTION_STRING=Host=space-service-db;Port=5432;Database=space_db;Username=space_user;Password=space_secret_2024
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
-      - "5002:80"
+      - "5202:5002"
+      - "5204:5004"
     depends_on:
-      - space-service-db
+      space-service-db:
+        condition: service_healthy
 
   # Finance Service Database
   finance-service-db:
@@ -60,6 +76,12 @@ services:
       - pgdata-finance:/var/lib/postgresql/data
     ports:
       - "5434:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "finance_user", "-d", "finance_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   # Finance Service
   finance-service:
@@ -72,7 +94,8 @@ services:
     ports:
       - "5003:80"
     depends_on:
-      - finance-service-db
+      finance-service-db:
+        condition: service_healthy
 
   # ApiGateway (no database - just routing)
   api-gateway:

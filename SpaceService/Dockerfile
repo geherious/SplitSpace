@@ -8,15 +8,15 @@ ENV DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true
 ENV DOTNET_NOLOGO=true
 ENV NUGET_PACKAGES=/root/.nuget/packages
 
-COPY AuthService.sln ./
+COPY SpaceService.sln ./
 COPY Directory.Packages.props ./
 COPY Directory.Build.props ./
 COPY Directory.Build.targets ./
 COPY . .
 
-RUN dotnet restore AuthService.sln
+RUN dotnet restore SpaceService.sln
 
-RUN dotnet publish src/SplitSpace.AuthService/SplitSpace.AuthService.csproj \
+RUN dotnet publish src/SplitSpace.SpaceService/SplitSpace.SpaceService.csproj \
     -c Release \
     -o /app/publish \
     --no-restore
@@ -27,4 +27,4 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
-ENTRYPOINT ["dotnet", "SplitSpace.AuthService.dll"]
+ENTRYPOINT ["dotnet", "SplitSpace.SpaceService.dll"]

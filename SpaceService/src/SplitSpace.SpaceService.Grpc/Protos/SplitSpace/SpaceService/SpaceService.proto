@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package SplitSpace.SpaceService;
+
+option csharp_namespace = "SplitSpace.SpaceService.Api";
+
+import "google/api/annotations.proto";
+import "SplitSpace/SpaceService/Common.proto";
+
+service SpaceService {
+  rpc GetSpaces(GetSpacesRequest) returns (GetSpacesResponse) {
+    option (google.api.http) = {
+      post: "/v1/spaces"
+      body: "*"
+    };
+  }
+  rpc CreateSpace(CreateSpaceRequest) returns (CreateSpaceResponse) {
+    option (google.api.http) = {
+      post: "/v1/spaces/create"
+      body: "*"
+    };
+  }
+  rpc DeleteSpace(DeleteSpaceRequest) returns (DeleteSpaceResponse) {
+    option (google.api.http) = {
+      post: "/v1/spaces/delete"
+      body: "*"
+    };
+  }
+}
+
+message GetSpacesRequest {
+  string user_id = 1;
+}
+
+message GetSpacesResponse {
+  message Space {
+    string space_id = 1;
+    string name = 2;
+    SplitSpace.SpaceService.Common.SpaceType type = 3;
+    SplitSpace.SpaceService.Common.SpaceMembershipRole user_role = 4;
+  }
+  
+  repeated Space spaces = 1;
+}
+
+message CreateSpaceRequest {
+  string user_id = 1;
+  string name = 2;
+  SplitSpace.SpaceService.Common.SpaceType type = 3;
+}
+
+message CreateSpaceResponse {
+  string space_id = 1;
+}
+
+message DeleteSpaceRequest {
+  string user_id = 1;
+  string space_id = 2;
+}
+
+message DeleteSpaceResponse {
+  bool success = 1;
+}

@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SplitSpace.SpaceService.Dal\SplitSpace.SpaceService.Dal.csproj" />
+  </ItemGroup>
+
+</Project>
