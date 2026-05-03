@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4C-00C04F79EFBC}") = "SplitSpace.SpaceService.Log
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4C-00C04F79EFBC}") = "SplitSpace.SpaceService.Grpc", "src\SplitSpace.SpaceService.Grpc\SplitSpace.SpaceService.Grpc.csproj", "{55555555-6666-7777-8888-999999999999}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SplitSpace.SpaceService.Producing", "src\SplitSpace.SpaceService.Producing\SplitSpace.SpaceService.Producing.csproj", "{43446EC1-FCF5-4EEC-A58A-7646E5A6A0A7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,5 +40,9 @@ Global
 		{55555555-6666-7777-8888-999999999999}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{55555555-6666-7777-8888-999999999999}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{55555555-6666-7777-8888-999999999999}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43446EC1-FCF5-4EEC-A58A-7646E5A6A0A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43446EC1-FCF5-4EEC-A58A-7646E5A6A0A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43446EC1-FCF5-4EEC-A58A-7646E5A6A0A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43446EC1-FCF5-4EEC-A58A-7646E5A6A0A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

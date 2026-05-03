@@ -4,6 +4,8 @@ using SplitSpace.SpaceService.Dal.Models.Entities;
 using SplitSpace.SpaceService.Dal.Repositories;
 using SplitSpace.SpaceService.Logic.Models.Commands;
 using SplitSpace.SpaceService.Logic.Models.Results;
+using SplitSpace.SpaceService.Producing.Models.SpaceEvents;
+using SplitSpace.SpaceService.Producing.Producers;
 
 namespace SplitSpace.SpaceService.Logic.Services.Implementations;
 
@@ -12,14 +14,17 @@ public class SpaceService : ISpaceService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ISpaceRepository _spaceRepository;
     private readonly ISpaceMembershipRepository _spaceMembershipRepository;
+    private readonly ISpaceEventsProducer _spaceEventsProducer;
 
     public SpaceService(ISpaceRepository spaceRepository,
         IUnitOfWork unitOfWork,
-        ISpaceMembershipRepository spaceMembershipRepository)
+        ISpaceMembershipRepository spaceMembershipRepository,
+        ISpaceEventsProducer spaceEventsProducer)
     {
         _spaceRepository = spaceRepository;
         _unitOfWork = unitOfWork;
         _spaceMembershipRepository = spaceMembershipRepository;
+        _spaceEventsProducer = spaceEventsProducer;
     }
 
     public async Task<Result<GetSpacesResultData>> GetSpacesAsync(GetSpacesCommand command)
@@ -77,6 +82,17 @@ public class SpaceService : ISpaceService
         await _spaceRepository.CreateSpaceAsync(space);
         await _spaceMembershipRepository.AddAsync(spaceMembership);
         await _unitOfWork.SaveChangesAsync();
+
+        var spaceEvent = new SpaceEvent<UsersAddedToSpaceEventData>
+        {
+            SpaceId = space.Id,
+            Data = new UsersAddedToSpaceEventData
+            {
+                SpaceId = space.Id,
+                UserIds = [spaceMembership.UserId]
+            }
+        };
+        await _spaceEventsProducer.ProduceAsync(spaceEvent);
 
         return Result<CreateSpaceResultData>.Success(new CreateSpaceResultData(space.Id));
     }

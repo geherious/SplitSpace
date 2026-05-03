@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SplitSpace.SpaceService.Dal\SplitSpace.SpaceService.Dal.csproj" />
+    <ProjectReference Include="..\SplitSpace.SpaceService.Producing\SplitSpace.SpaceService.Producing.csproj" />
   </ItemGroup>
 
 </Project>

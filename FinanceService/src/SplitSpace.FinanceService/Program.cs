@@ -1,10 +1,11 @@
+using SplitSpace.FinanceService.Consuming;
 using SplitSpace.FinanceService.Dal;
 using SplitSpace.FinanceService.Logic;
 using SplitSpace.FinanceService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddGrpc().AddJsonTranscoding();;
+builder.Services.AddGrpc().AddJsonTranscoding();
 builder.Services.AddGrpcReflection();
 
 builder.Services.AddGrpcSwagger();
@@ -16,6 +17,7 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddRepositories();
 builder.Services.AddServices();
+builder.Services.AddConsumers();
 
 builder.WebHost.ConfigureKestrel(options =>
 {

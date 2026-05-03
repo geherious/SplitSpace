@@ -64,6 +64,10 @@ services:
     depends_on:
       space-service-db:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   # Finance Service Database
   finance-service-db:
@@ -97,25 +101,132 @@ services:
     depends_on:
       finance-service-db:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   # ApiGateway (no database - just routing)
-  api-gateway:
-    build:
-      context: ../ApiGateway
-      dockerfile: Dockerfile
+  # api-gateway:
+  #   build:
+  #     context: ../ApiGateway
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - AUTH_SERVICE_URL=http://auth-service:5001
+  #     - SPACE_SERVICE_URL=http://space-service:5002
+  #     - FINANCE_SERVICE_URL=http://finance-service:5003
+  #   ports:
+  #     - "5004:80"
+  #   depends_on:
+  #     - auth-service
+  #     - space-service
+  #     - finance-service
+  
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: zookeeper
+    restart: unless-stopped
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - AUTH_SERVICE_URL=http://auth-service:5001
-      - SPACE_SERVICE_URL=http://space-service:5002
-      - FINANCE_SERVICE_URL=http://finance-service:5003
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
     ports:
-      - "5004:80"
+      - "2181:2181"
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD-SHELL", "echo srvr | nc -w 2 localhost 2181 | grep -q Mode"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+ 
+  # ──────────────────────────────────────────
+  # KAFKA BROKER
+  # ──────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka
+    restart: unless-stopped
     depends_on:
-      - auth-service
-      - space-service
-      - finance-service
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"       # external (host)
+      - "29092:29092"     # internal (inter-container)
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+ 
+      # Listeners: PLAINTEXT for internal traffic, EXTERNAL for host access
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+ 
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_RETENTION_HOURS: 168       # 7 days
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824  # 1 GB
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:29092 >/dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+ 
+  # ──────────────────────────────────────────
+  # KAFKA TOPIC INIT  (runs once, then exits)
+  # ──────────────────────────────────────────
+  kafka-init:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka-init
+    restart: "no"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP: kafka:29092
+    entrypoint: ["bash", "/scripts/kafka-init.sh"]
+    volumes:
+      - ./kafka-init.sh:/scripts/kafka-init.sh:ro
+ 
+  # ──────────────────────────────────────────
+  # KAFKA UI
+  # ──────────────────────────────────────────
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      DYNAMIC_CONFIG_ENABLED: "true"
+      AUTH_TYPE: "disabled"           # change to LOGIN_FORM for basic auth
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep UP || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 volumes:
   pgdata-auth:
   pgdata-space:
   pgdata-finance:
+  zookeeper-data:
+  zookeeper-logs:
+  kafka-data:

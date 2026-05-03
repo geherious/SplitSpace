@@ -4,6 +4,8 @@ namespace SplitSpace.FinanceService.Dal.Repositories;
 
 public interface ISpaceMembershipRepository
 {
+    Task AddBatchAsync(IReadOnlyCollection<SpaceMembership> spaceMemberships);
+    
     Task<SpaceMembership?> GetAsync(Guid spaceId, Guid userId);
     
     Task<IReadOnlyCollection<SpaceMembership>> GetBatchAsync(Guid spaceId);

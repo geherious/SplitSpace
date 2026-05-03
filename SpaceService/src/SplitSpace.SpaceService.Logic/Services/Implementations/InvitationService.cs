@@ -5,6 +5,8 @@ using SplitSpace.SpaceService.Dal.Models.Entities;
 using SplitSpace.SpaceService.Dal.Repositories;
 using SplitSpace.SpaceService.Logic.Models.Commands;
 using SplitSpace.SpaceService.Logic.Models.Results;
+using SplitSpace.SpaceService.Producing.Models.SpaceEvents;
+using SplitSpace.SpaceService.Producing.Producers;
 
 namespace SplitSpace.SpaceService.Logic.Services.Implementations;
 
@@ -15,18 +17,21 @@ public class InvitationService : IInvitationService
     private readonly ISpaceRepository _spaceRepository;
     private readonly ISpaceMembershipRepository _spaceMembershipRepository;
     private readonly IAuthServiceClientFacade _authServiceClientFacade;
+    private readonly ISpaceEventsProducer _spaceEventsProducer;
 
     public InvitationService(IInvitationRepository invitationRepository,
         ISpaceRepository spaceRepository,
         IAuthServiceClientFacade authServiceClientFacade,
         IUnitOfWork unitOfWork,
-        ISpaceMembershipRepository spaceMembershipRepository)
+        ISpaceMembershipRepository spaceMembershipRepository,
+        ISpaceEventsProducer spaceEventsProducer)
     {
         _invitationRepository = invitationRepository;
         _spaceRepository = spaceRepository;
         _authServiceClientFacade = authServiceClientFacade;
         _unitOfWork = unitOfWork;
         _spaceMembershipRepository = spaceMembershipRepository;
+        _spaceEventsProducer = spaceEventsProducer;
     }
 
     public async Task<Result<InviteUserResultData>> InviteUserAsync(InviteUserCommand command)
@@ -161,6 +166,17 @@ public class InvitationService : IInvitationService
         
         await _unitOfWork.SaveChangesAsync();
         await _unitOfWork.CommitTransactionAsync();
+        
+        var spaceEvent = new SpaceEvent<UsersAddedToSpaceEventData>
+        {
+            SpaceId = invitation.SpaceId,
+            Data = new UsersAddedToSpaceEventData
+            {
+                SpaceId = invitation.SpaceId,
+                UserIds = [invitation.InvitedUserId]
+            }
+        };
+        await _spaceEventsProducer.ProduceAsync(spaceEvent);
         
         return Result.Success();
     }

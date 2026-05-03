@@ -12,6 +12,11 @@ public class SpaceMembershipRepository : ISpaceMembershipRepository
         _dbContext = dbContext;
     }
 
+    public async Task AddBatchAsync(IReadOnlyCollection<SpaceMembership> spaceMemberships)
+    {
+        await _dbContext.SpaceMemberships.AddRangeAsync(spaceMemberships);
+    }
+
     public async Task<SpaceMembership?> GetAsync(Guid spaceId, Guid userId)
     {
         return await _dbContext.SpaceMemberships.FirstOrDefaultAsync(m => m.SpaceId == spaceId && m.UserId == userId);

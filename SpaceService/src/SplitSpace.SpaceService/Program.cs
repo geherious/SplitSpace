@@ -1,5 +1,6 @@
 using SplitSpace.SpaceService.Dal;
 using SplitSpace.SpaceService.Logic;
+using SplitSpace.SpaceService.Producing;
 using SplitSpace.SpaceService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddRepositories();
 builder.Services.AddClientFacades();
+builder.Services.AddProducers();
 builder.Services.AddServices();
 
 builder.WebHost.ConfigureKestrel(options =>
@@ -35,6 +37,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapGrpcService<SpaceServiceGrpc>();
 app.MapGrpcService<InvitationServiceGrpc>();
+app.MapGrpcReflectionService();
 
 using var scope = app.Services.CreateScope();
 var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();

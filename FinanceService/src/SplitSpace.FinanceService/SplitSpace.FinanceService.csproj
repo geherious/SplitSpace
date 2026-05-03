@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SplitSpace.FinanceService.Consuming\SplitSpace.FinanceService.Consuming.csproj" />
     <ProjectReference Include="..\SplitSpace.FinanceService.Logic\SplitSpace.FinanceService.Logic.csproj" />
     <ProjectReference Include="..\SplitSpace.FinanceService.Dal\SplitSpace.FinanceService.Dal.csproj" />
   </ItemGroup>

@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4C-00C04F79EFBC}") = "SplitSpace.FinanceService.L
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4C-00C04F79EFBC}") = "SplitSpace.FinanceService.Grpc", "src\SplitSpace.FinanceService.Grpc\SplitSpace.FinanceService.Grpc.csproj", "{55555555-6666-7777-8888-999999999999}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SplitSpace.FinanceService.Consuming", "src\SplitSpace.FinanceService.Consuming\SplitSpace.FinanceService.Consuming.csproj", "{1422DAB5-260C-46DC-BA76-B6DED6A1D9B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,5 +40,9 @@ Global
 		{55555555-6666-7777-8888-999999999999}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{55555555-6666-7777-8888-999999999999}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{55555555-6666-7777-8888-999999999999}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1422DAB5-260C-46DC-BA76-B6DED6A1D9B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1422DAB5-260C-46DC-BA76-B6DED6A1D9B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1422DAB5-260C-46DC-BA76-B6DED6A1D9B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1422DAB5-260C-46DC-BA76-B6DED6A1D9B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
