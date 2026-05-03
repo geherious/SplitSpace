@@ -92,7 +92,8 @@ services:
       - FINANCE_SERVICE_DB_CONNECTION_STRING=Host=finance-service-db;Port=5432;Database=finance_db;Username=finance_user;Password=finance_secret_2024
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
-      - "5003:80"
+      - "5302:5002"
+      - "5304:5004"
     depends_on:
       finance-service-db:
         condition: service_healthy
