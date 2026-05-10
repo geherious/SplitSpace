@@ -22,6 +22,7 @@ public class ExpenseRepository : IExpenseRepository
     {
         return await (
             from exp in _dbContext.Expenses
+            where exp.SpaceId == spaceId
             join spl in _dbContext.ExpenseSplits
                 on exp.Id equals spl.ExpenseId into splits
             join acc in _dbContext.Accounts
@@ -43,7 +44,7 @@ public class ExpenseRepository : IExpenseRepository
         return _dbContext.Expenses
             .Where(e => e.SpaceId == spaceId &&
                         e.CreatedAt >= fromDate &&
-                        e.CreatedAt <= toDate)
+                        e.CreatedAt < toDate)
             .GroupBy(e => e.CategoryId)
             .Select(g => new ExpenseByCategory(g.Key, g.Sum(i => i.Amount)))
             .ToArray();

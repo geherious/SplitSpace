@@ -3,8 +3,8 @@ using SplitSpace.FinanceService.Common.Enums;
 namespace SplitSpace.FinanceService.Logic.Models.Commands;
 
 public record AddAccountCommand(
-    Guid SpaceId,
     Guid UserId,
+    Guid OwnerId,
+    AccountOwnerType AccountOwnerType,
     string Name,
-    decimal Balance,
-    AccountOwnerType AccountOwnerType);
+    decimal Balance);

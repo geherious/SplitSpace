@@ -9,7 +9,8 @@ public static class ErrorMapper
     {
         [ErrorType.Validation] = StatusCode.InvalidArgument,
         [ErrorType.FailedPrecondition] = StatusCode.FailedPrecondition,
-        [ErrorType.Unauthenticated] = StatusCode.Unauthenticated
+        [ErrorType.Unauthenticated] = StatusCode.Unauthenticated,
+        [ErrorType.AlreadyExists] = StatusCode.AlreadyExists,
     };
 
     public static RpcException ToRpcException(Error error)

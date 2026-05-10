@@ -1,0 +1,84 @@
+# Build outputs
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# NuGet packages
+packages/
+**.nuget.props
+**.nuget.targets
+
+# IDE settings
+.idea/
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+[Dd]ebugger.binlog
+
+# User-specific files
+*.csx
+*.sln.user
+*.userprefs
+*.suo
+*.userosscache
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database files
+*.mdf
+*.ldf
+*.ndf
+
+# Test coverage results
+coverage*/
+TestResults/
+**.CoverageResult
+
+# NuGet Temp
+[n]uget.tmp
+*.sln.docstates
+
+# Build runtime
+*.runtimeconfig.json
+*.deps.json
+*.rosetta.json
+
+# VS Cache
+*.cache
+.vs/
+
+# User-specific settings
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows Image File Execution-cache
+ImageFileExecutionException.*
+
+# Log Files
+[Dd]ebug.log
+[Dd]ebugger.log
+*.log
+
+# NuGet Cache
+*.nupkg
+**/bin/*
+**/obj/*

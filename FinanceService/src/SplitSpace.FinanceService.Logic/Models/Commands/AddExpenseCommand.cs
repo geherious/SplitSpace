@@ -7,7 +7,8 @@ public record AddExpenseCommand(
     Guid AccountId,
     decimal Amount,
     string Description,
-    AddExpenseCommand.ExpenseSplit? Split)
+    AddExpenseCommand.ExpenseSplit? Split,
+    DateTimeOffset CreatedAt)
 {
     public enum ExpenseSplitTemplate
     {

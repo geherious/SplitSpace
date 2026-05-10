@@ -62,7 +62,7 @@ public class AuthService : IAuthService
         {
             errors.Add(new Error
             {
-                Type = ErrorType.FailedPrecondition,
+                Type = ErrorType.AlreadyExists,
                 Code = "USER_EXISTS",
                 Message = "User with this email already exists"
             });

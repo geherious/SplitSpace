@@ -31,7 +31,10 @@ public class SearchService : ISearchService
             });
         }
         
-        var aggregate = await _expenseRepository.GetGroupedByCategory(command.SpaceId, command.DateFrom, command.DateTo);
+        var aggregate = await _expenseRepository.GetGroupedByCategory(
+            command.SpaceId,
+            command.DateFrom.ToUniversalTime(),
+            command.DateTo.ToUniversalTime());
 
         var items = aggregate.Select(a => new GetReportResultData.GetReportItem(a.CategoryId, a.Amount)).ToArray();
         return Result.Success(new GetReportResultData(items));

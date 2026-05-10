@@ -4,5 +4,6 @@ public enum ErrorType
 {
     Validation,
     FailedPrecondition,
-    Unauthenticated
+    Unauthenticated,
+    AlreadyExists
 }

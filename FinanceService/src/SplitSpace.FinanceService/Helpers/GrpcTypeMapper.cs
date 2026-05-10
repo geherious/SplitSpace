@@ -1,3 +1,4 @@
+using Google.Protobuf.WellKnownTypes;
 using Google.Type;
 using Grpc.Core;
 using DateTime = System.DateTime;
@@ -115,5 +116,21 @@ public static class GrpcTypeMapper
         var offset = timeZoneId.GetUtcOffset(localDateTime);
 
         return new DateTimeOffset(localDateTime, offset);
+    }
+
+    public static DateTimeOffset ToDateTimeOffsetOrThrow(this Timestamp timestamp, string fieldName)
+    {
+        if (timestamp.Nanos < 0)
+        {
+            throw new RpcException(
+                new Status(StatusCode.InvalidArgument, $"Timestamp nanos must be greater than or equal zero {fieldName}"));
+        }
+        if (timestamp.Seconds <= 0)
+        {
+            throw new RpcException(
+                new Status(StatusCode.InvalidArgument, $"Timestamp seconds must be greater than zero {fieldName}"));
+        }
+        
+        return timestamp.ToDateTimeOffset();
     }
 }

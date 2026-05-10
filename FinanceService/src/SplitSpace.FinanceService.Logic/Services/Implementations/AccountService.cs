@@ -25,20 +25,29 @@ public class AccountService : IAccountService
 
     public async Task<Result<AddAccountResultData>> AddAccountAsync(AddAccountCommand command)
     {
-        var membership = await _spaceMembershipRepository.GetAsync(command.SpaceId, command.UserId);
+        if (command.AccountOwnerType == AccountOwnerType.Space)
+        {
+            var membership = await _spaceMembershipRepository.GetAsync(command.OwnerId, command.UserId);
 
-        if (membership is null)
+            if (membership is null)
+            {
+                return Result<AddAccountResultData>.Failure(new Error
+                {
+                    Type = ErrorType.NotFound,
+                    Message = "Space not found"
+                });
+            }
+        }
+
+        if (command.AccountOwnerType == AccountOwnerType.Personal &&
+            command.OwnerId != command.UserId)
         {
             return Result<AddAccountResultData>.Failure(new Error
             {
                 Type = ErrorType.NotFound,
-                Message = "Space not found"
+                Message = "Owner id should equal the user id"
             });
         }
-
-        var ownerId = command.AccountOwnerType == AccountOwnerType.Personal
-            ? command.UserId
-            : command.SpaceId;
 
         var account = new Account
         {
@@ -46,7 +55,7 @@ public class AccountService : IAccountService
             Name = command.Name,
             Balance = command.Balance,
             OwnerType = command.AccountOwnerType,
-            OwnerId = ownerId
+            OwnerId = command.OwnerId
         };
 
         await _accountRepository.AddAsync(account);

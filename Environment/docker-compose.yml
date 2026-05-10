@@ -106,22 +106,18 @@ services:
       kafka-init:
         condition: service_completed_successfully
 
-  # ApiGateway (no database - just routing)
-  # api-gateway:
-  #   build:
-  #     context: ../ApiGateway
-  #     dockerfile: Dockerfile
-  #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development
-  #     - AUTH_SERVICE_URL=http://auth-service:5001
-  #     - SPACE_SERVICE_URL=http://space-service:5002
-  #     - FINANCE_SERVICE_URL=http://finance-service:5003
-  #   ports:
-  #     - "5004:80"
-  #   depends_on:
-  #     - auth-service
-  #     - space-service
-  #     - finance-service
+  external-facade:
+    build:
+      context: ../ExternalFacade
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "8000:8000"
+    depends_on:
+      - auth-service
+      - space-service
+      - finance-service
   
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.1

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Grpc.Core;
 using SplitSpace.FinanceService.Api.FinanceService;
+using SplitSpace.FinanceService.Common.Enums;
 using SplitSpace.FinanceService.Helpers;
 using SplitSpace.FinanceService.Logic.Models.Commands;
 using SplitSpace.FinanceService.Logic.Services;
@@ -80,16 +81,32 @@ public class FinanceServiceGrpc : Api.FinanceService.FinanceService.FinanceServi
 
     public override async Task<AddAccountResponse> AddAccount(AddAccountRequest request, ServerCallContext context)
     {
-        var spaceId = request.SpaceId.ToGuidOrThrow(nameof(request.SpaceId));
-        var userId = request.UserId.ToGuidOrThrow(nameof(request.UserId));
+        var userId = request.ActorUserId.ToGuidOrThrow(nameof(request.ActorUserId));
         var balance = request.Balance.ToDecimalOrThrow(nameof(request.Balance));
 
+        Guid ownerId;
+        AccountOwnerType ownerType;
+        switch (request.OwnerCase)
+        {
+            case AddAccountRequest.OwnerOneofCase.OwnerSpaceId:
+                ownerId = request.OwnerSpaceId.ToGuidOrThrow(nameof(request.OwnerSpaceId));
+                ownerType = AccountOwnerType.Space;
+                break;
+            case AddAccountRequest.OwnerOneofCase.OwnerUserId:
+                ownerId = request.OwnerUserId.ToGuidOrThrow(nameof(request.OwnerUserId));
+                ownerType = AccountOwnerType.Personal;
+                break;
+            case AddAccountRequest.OwnerOneofCase.None:
+            default:
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "Invalid owner oneof case"));
+        }
+
         var result = await _accountService.AddAccountAsync(new AddAccountCommand(
-            spaceId,
             userId,
+            ownerId,
+            ownerType,
             request.Name,
-            balance,
-            request.OwnerType.ToDomain()));
+            balance));
 
         if (!result.IsSuccess)
         {
@@ -196,6 +213,7 @@ public class FinanceServiceGrpc : Api.FinanceService.FinanceService.FinanceServi
         var categoryId = request.CategoryId.ToGuidOrThrow(nameof(request.CategoryId));
         var accountId = request.AccountId.ToGuidOrThrow(nameof(request.AccountId));
         var amount = request.Amount.ToDecimalOrThrow(nameof(request.Amount));
+        var createdAt = request.CreatedAt.ToDateTimeOffsetOrThrow(nameof(request.CreatedAt));
 
         var result = await _expenseService.AddExpenseAsync(new AddExpenseCommand(
             spaceId,
@@ -212,7 +230,8 @@ public class FinanceServiceGrpc : Api.FinanceService.FinanceService.FinanceServi
                     AddExpenseRequest.Types.Split.TypeOneofCase.TemplateSplit =>
                         request.Split.TemplateSplit.ToCommand(),
                     _ => throw new ValidationException("Invalid split type")
-                }));
+                },
+            createdAt));
 
         if (!result.IsSuccess)
         {

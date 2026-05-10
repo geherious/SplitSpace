@@ -89,7 +89,7 @@ public class ExpenseService : IExpenseService
             AccountId = command.AccountId,
             Amount = command.Amount,
             Description = command.Description,
-            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedAt = command.CreatedAt,
         };
 
         List<ExpenseSplit> splits = [];
