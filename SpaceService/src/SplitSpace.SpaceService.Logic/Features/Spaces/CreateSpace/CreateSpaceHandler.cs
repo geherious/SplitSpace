@@ -29,7 +29,7 @@ public class CreateSpaceHandler : ICommandHandler<CreateSpaceCommand, Result<Cre
             _ => throw new ArgumentOutOfRangeException(nameof(SpaceType))
         };
 
-        await _spaceDomainRepository.AddAsync(space, ct);
+        await _spaceDomainRepository.SaveAsync(space, ct);
 
         return Result<CreateSpaceResultData>.Success(new CreateSpaceResultData(space.Id));
     }

@@ -1,5 +1,6 @@
-using SplitSpace.SpaceService.Domain.Common;
 using SplitSpace.SpaceService.Domain.Exceptions;
+using SplitSpace.SpaceService.Domain.Models.Common;
+using SplitSpace.SpaceService.Domain.Models.Events;
 using SplitSpace.SpaceService.Domain.Models.Ids;
 
 namespace SplitSpace.SpaceService.Domain.Models.Aggregates.Space;
@@ -7,19 +8,19 @@ namespace SplitSpace.SpaceService.Domain.Models.Aggregates.Space;
 public sealed record Space : AggregateRoot<SpaceId>
 {
     public override SpaceId Id { get; protected set; }
-    
+
     public string Name { get; private set; }
-    
+
     public SpaceType Type { get; private set; }
-    
+
     public UserId OwnerId { get; private set; }
 
     private List<SpaceMember> SpaceMembers { get; set; } = [];
-    public IReadOnlyCollection<SpaceMember> Members => SpaceMembers;
-    
+    public IReadOnlyCollection<SpaceMember> Members => SpaceMembers.AsReadOnly();
+
     public DateTimeOffset CreatedAt { get; init; }
 
-    private Space(
+    internal Space(
         SpaceId spaceId,
         string name,
         SpaceType type,
@@ -36,7 +37,7 @@ public sealed record Space : AggregateRoot<SpaceId>
         {
             throw new InvariantViolationException("Space should at least contain owner");
         }
-        
+
         Id = spaceId;
         Name = name;
         Type = type;
@@ -54,16 +55,21 @@ public sealed record Space : AggregateRoot<SpaceId>
             spaceId,
             SpaceMemberRole.Owner,
             createdAt);
-        
-        return new Space(
+
+        var space = new Space(
             spaceId: spaceId,
             name: name,
             type: SpaceType.Private,
             ownerId: ownerId,
             spaceMembers: [ownerMember],
             createdAt: createdAt);
+
+        space.AddDomainEvent(new SpaceCreatedEvent(spaceId, name, SpaceType.Private, ownerId, createdAt));
+        space.AddDomainEvent(new SpaceMemberAddedEvent(ownerMember.Id, spaceId, ownerId, SpaceMemberRole.Owner, createdAt));
+
+        return space;
     }
-    
+
     public static Space CreateShared(string name,
         UserId ownerId,
         IReadOnlyCollection<UserId> otherMemberIds,
@@ -78,23 +84,34 @@ public sealed record Space : AggregateRoot<SpaceId>
 
         var otherMembers = otherMemberIds.Select(mid =>
             SpaceMember.Create(mid, spaceId, SpaceMemberRole.Member, createdAt));
-        
-        return new Space(
+
+        var allMembers = new[] { ownerMember }.Concat(otherMembers).ToList();
+
+        var space = new Space(
             spaceId: spaceId,
             name: name,
             type: SpaceType.Shared,
             ownerId: ownerId,
-            spaceMembers: [ownerMember, .. otherMembers],
+            spaceMembers: allMembers,
             createdAt: createdAt);
+
+        space.AddDomainEvent(new SpaceCreatedEvent(spaceId, name, SpaceType.Shared, ownerId, createdAt));
+        foreach (var member in allMembers)
+        {
+            space.AddDomainEvent(new SpaceMemberAddedEvent(member.Id, spaceId, member.UserId, member.Role, member.JoinedAt));
+        }
+
+        return space;
     }
 
-    public bool CanBeDeletedBy(UserId userId)
+    public bool DeleteBy(UserId userId)
     {
         if (OwnerId != userId)
         {
             return false;
         }
-        
+
+        AddDomainEvent(new SpaceDeletedEvent(Id));
         return true;
     }
 
@@ -109,8 +126,16 @@ public sealed record Space : AggregateRoot<SpaceId>
         {
             return false;
         }
-        
-        SpaceMembers.Add(SpaceMember.Create(userId, Id, SpaceMemberRole.Member, joinedAt));
+
+        var member = SpaceMember.Create(userId, Id, SpaceMemberRole.Member, joinedAt);
+        SpaceMembers.Add(member);
+        AddDomainEvent(new SpaceMemberAddedEvent(member.Id, Id, userId, SpaceMemberRole.Member, joinedAt));
+
         return true;
+    }
+
+    public void SetMembers(IReadOnlyCollection<SpaceMember> members)
+    {
+        SpaceMembers = [.. members];
     }
 }

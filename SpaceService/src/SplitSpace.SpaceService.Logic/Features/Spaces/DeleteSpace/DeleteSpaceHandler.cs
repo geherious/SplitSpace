@@ -28,7 +28,7 @@ public class DeleteSpaceHandler : ICommandHandler<DeleteSpaceCommand, Result>
             });
         }
 
-        if (space.CanBeDeletedBy(command.UserId) is false)
+        if (space.DeleteBy(command.UserId) is false)
         {
             return Result.Failure(new Error
             {
@@ -38,7 +38,7 @@ public class DeleteSpaceHandler : ICommandHandler<DeleteSpaceCommand, Result>
             });
         }
         
-        await _spaceDomainRepository.DeleteAsync(space, ct);
+        await _spaceDomainRepository.SaveAsync(space, ct);
 
         return Result.Success();
     }

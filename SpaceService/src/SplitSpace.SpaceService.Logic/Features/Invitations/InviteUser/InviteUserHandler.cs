@@ -65,7 +65,7 @@ public class InviteUserHandler : ICommandHandler<InviteUserCommand, Result<Invit
         var currentTime = _timeProvider.GetUtcNow();
         var invitation = Invitation.Create(command.SpaceId, invitedUserId.Value, command.InvitedByUserId, currentTime);
 
-        await _invitationDomainRepository.AddAsync(invitation, ct);
+        await _invitationDomainRepository.SaveAsync(invitation, ct);
 
         return Result<InviteUserResultData>.Success(new InviteUserResultData(invitation.Id));
     }

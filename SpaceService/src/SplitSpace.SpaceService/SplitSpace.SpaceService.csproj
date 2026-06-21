@@ -12,8 +12,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" />
     <PackageReference Include="Microsoft.AspNetCore.Grpc.Swagger" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
+
   </ItemGroup>
 
   <ItemGroup>

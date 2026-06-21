@@ -1,20 +1,16 @@
 using Mediator;
 using SplitSpace.SpaceService.Common.Models;
-using SplitSpace.SpaceService.Dal.Repositories;
 using SplitSpace.SpaceService.Domain.Models.Aggregates.Invitation;
 
 namespace SplitSpace.SpaceService.Logic.Features.Invitations.RejectInvitation;
 
 public class RejectInvitationHandler : ICommandHandler<RejectInvitationCommand, Result>
 {
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IInvitationDomainRepository _invitationDomainRepository;
 
     public RejectInvitationHandler(
-        IUnitOfWork unitOfWork,
         IInvitationDomainRepository invitationDomainRepository)
     {
-        _unitOfWork = unitOfWork;
         _invitationDomainRepository = invitationDomainRepository;
     }
 
@@ -42,8 +38,8 @@ public class RejectInvitationHandler : ICommandHandler<RejectInvitationCommand, 
                 Message = $"Invitation with id {command.InvitationId.Value} can not be rejected"
             });
         }
-        
-        await _unitOfWork.SaveChangesAsync(ct);
+
+        await _invitationDomainRepository.SaveAsync(invitation, ct);
 
         return Result.Success();
     }

@@ -1,6 +1,6 @@
 using Mediator;
 using SplitSpace.SpaceService.Common.Models;
-using SplitSpace.SpaceService.Dal.Repositories;
+using SplitSpace.SpaceService.Dal.Database.Transactions;
 using SplitSpace.SpaceService.Domain.Exceptions;
 using SplitSpace.SpaceService.Domain.Models.Aggregates.Invitation;
 using SplitSpace.SpaceService.Domain.Models.Aggregates.Space;
@@ -10,19 +10,19 @@ namespace SplitSpace.SpaceService.Logic.Features.Invitations.AcceptInvitation;
 public class AcceptInvitationHandler : ICommandHandler<AcceptInvitationCommand, Result>
 {
     private readonly TimeProvider _timeProvider;
-    
-    private readonly IUnitOfWork _unitOfWork;
+
+    private readonly ITransactionProvider _transactionProvider;
     private readonly IInvitationDomainRepository _invitationDomainRepository;
     private readonly ISpaceDomainRepository _spaceDomainRepository;
 
     public AcceptInvitationHandler(
         TimeProvider timeProvider,
-        IUnitOfWork unitOfWork,
+        ITransactionProvider transactionProvider,
         IInvitationDomainRepository invitationDomainRepository,
         ISpaceDomainRepository spaceDomainRepository)
     {
         _timeProvider = timeProvider;
-        _unitOfWork = unitOfWork;
+        _transactionProvider = transactionProvider;
         _invitationDomainRepository = invitationDomainRepository;
         _spaceDomainRepository = spaceDomainRepository;
     }
@@ -40,7 +40,7 @@ public class AcceptInvitationHandler : ICommandHandler<AcceptInvitationCommand, 
                 Message = $"Invitation with id {command.InvitationId.Value} not found"
             });
         }
-        
+
         var space = await _spaceDomainRepository.GetAsync(invitation.SpaceId, ct);
 
         if (space is null)
@@ -62,7 +62,12 @@ public class AcceptInvitationHandler : ICommandHandler<AcceptInvitationCommand, 
         var now = _timeProvider.GetUtcNow();
         space.AddMember(command.UserId, now);
 
-        await _unitOfWork.SaveChangesAsync(ct);
+        await using var tx = await _transactionProvider.BeginAsync(ct);
+        
+        await tx.Repositories.InvitationDomainRepository.SaveAsync(invitation, ct);
+        await tx.Repositories.SpaceDomainRepository.SaveAsync(space, ct);
+        
+        await tx.CommitAsync(ct);
 
         return Result.Success();
     }

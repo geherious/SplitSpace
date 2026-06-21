@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Models\" />
+        <InternalsVisibleTo Include="SplitSpace.SpaceService.Dal" />
     </ItemGroup>
 
 </Project>
