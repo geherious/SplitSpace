@@ -1,10 +1,14 @@
 namespace SplitSpace.SpaceService.Dal.Repositories;
 
-public interface IUnitOfWork : IDisposable
+public interface IUnitOfWork
 {
-    Task<int> SaveChangesAsync();
+    Task SaveChangesAsync(CancellationToken cancellationToken);
 
-    Task BeginTransactionAsync();
-    Task CommitTransactionAsync();
-    Task RollbackTransactionAsync();
+    Task<IUnitOfWorkTransaction> BeginTransactionAsync(CancellationToken ct);
+}
+
+public interface IUnitOfWorkTransaction : IAsyncDisposable
+{
+    Task CommitAsync(CancellationToken ct);
+    Task RollbackAsync(CancellationToken ct);
 }

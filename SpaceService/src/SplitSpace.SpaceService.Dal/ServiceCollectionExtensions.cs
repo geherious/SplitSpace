@@ -5,6 +5,7 @@ using SplitSpace.SpaceService.Dal.ClientFacades;
 using SplitSpace.SpaceService.Dal.ClientFacades.Implementations;
 using SplitSpace.SpaceService.Dal.Repositories;
 using SplitSpace.SpaceService.Dal.Repositories.Implementations;
+using SplitSpace.SpaceService.Domain.Models.Aggregates.Space;
 
 namespace SplitSpace.SpaceService.Dal;
 
@@ -24,9 +25,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<DatabaseMigrator>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<ISpaceRepository, SpaceRepository>();
-        services.AddScoped<IInvitationRepository, InvitationRepository>();
-        services.AddScoped<ISpaceMembershipRepository, SpaceMembershipRepository>();
+        services.AddScoped<ISpaceDomainRepository, SpaceDomainRepository>();
 
         return services;
     }

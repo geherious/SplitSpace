@@ -1,6 +1,8 @@
+using SplitSpace.SpaceService.Domain.Models.Ids;
+
 namespace SplitSpace.SpaceService.Dal.ClientFacades.Implementations;
 
 public interface IAuthServiceClientFacade
 {
-    Task<Guid?> UserExistAsync(string email);
+    Task<UserId?> UserExistAsync(string email);
 }

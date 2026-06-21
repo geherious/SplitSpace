@@ -1,24 +1,29 @@
 using Grpc.Core;
+using Mediator;
 using SplitSpace.SpaceService.Api;
-using SplitSpace.SpaceService.Common.Enums;
+using SplitSpace.SpaceService.Api.Common;
+using SplitSpace.SpaceService.Domain.Models.Ids;
 using SplitSpace.SpaceService.Helpers;
-using SplitSpace.SpaceService.Logic.Models.Commands;
-using SplitSpace.SpaceService.Logic.Services;
+using SplitSpace.SpaceService.Logic.Features.Spaces.CreateSpace;
+using SplitSpace.SpaceService.Logic.Features.Spaces.DeleteSpace;
+using SplitSpace.SpaceService.Logic.Features.Spaces.GetSpaces;
+using SpaceDomain = SplitSpace.SpaceService.Domain.Models.Aggregates.Space;
 
 namespace SplitSpace.SpaceService.Services;
 
 public class SpaceServiceGrpc : Api.SpaceService.SpaceServiceBase
 {
-    private readonly ISpaceService _spaceService;
+    private readonly IMediator _mediator;
 
-    public SpaceServiceGrpc(ISpaceService spaceService)
+    public SpaceServiceGrpc(IMediator mediator)
     {
-        _spaceService = spaceService;
+        _mediator = mediator;
     }
 
     public override async Task<GetSpacesResponse> GetSpaces(GetSpacesRequest request, ServerCallContext context)
     {
-        var result = await _spaceService.GetSpacesAsync(new GetSpacesCommand(request.UserId));
+        var command = new GetSpacesQuery(new UserId(Guid.Parse(request.UserId)));
+        var result = await _mediator.Send(command,  context.CancellationToken);
 
         if (!result.IsSuccess)
         {
@@ -35,15 +40,15 @@ public class SpaceServiceGrpc : Api.SpaceService.SpaceServiceBase
                     SpaceId = s.Id.ToString(),
                     Type = s.SpaceType switch
                     {
-                        SpaceType.Shared => Api.Common.SpaceType.Shared,
-                        SpaceType.Private => Api.Common.SpaceType.Private,
+                        SpaceDomain.SpaceType.Shared => SpaceType.Shared,
+                        SpaceDomain.SpaceType.Private => SpaceType.Private,
                         _ => throw new ArgumentOutOfRangeException(nameof(SpaceType),
                             $"Unknown space type {s.SpaceType}")
                     },
                     UserRole = s.Role switch
                     {
-                        SpaceMembershipRole.Member => Api.Common.SpaceMembershipRole.Member,
-                        SpaceMembershipRole.Owner => Api.Common.SpaceMembershipRole.Owner,
+                        SpaceDomain.SpaceMemberRole.Member => SpaceMembershipRole.Member,
+                        SpaceDomain.SpaceMemberRole.Owner => SpaceMembershipRole.Owner,
                         _ => throw new ArgumentOutOfRangeException(nameof(SpaceMembershipRole),
                             $"Unknown role {s.Role}")
                     }
@@ -56,13 +61,17 @@ public class SpaceServiceGrpc : Api.SpaceService.SpaceServiceBase
     {
         var spaceType = request.Type switch
         {
-            Api.Common.SpaceType.Private => SpaceType.Private,
-            Api.Common.SpaceType.Shared => SpaceType.Shared,
+            SpaceType.Private => SpaceDomain.SpaceType.Private,
+            SpaceType.Shared => SpaceDomain.SpaceType.Shared,
             _ => throw new ArgumentOutOfRangeException(nameof(request.Type), "Unknown type")
         };
         
-        var result = await _spaceService.CreateSpaceAsync(
-            new CreateSpaceCommand(request.UserId, request.Name, spaceType));
+        var command = new CreateSpaceCommand(
+            new UserId(Guid.Parse(request.UserId)),
+            request.Name,
+            spaceType);
+        
+        var result = await _mediator.Send(command, context.CancellationToken);
 
         if (!result.IsSuccess)
         {
@@ -77,16 +86,17 @@ public class SpaceServiceGrpc : Api.SpaceService.SpaceServiceBase
 
     public override async Task<DeleteSpaceResponse> DeleteSpace(DeleteSpaceRequest request, ServerCallContext context)
     {
-        var result = await _spaceService.DeleteSpaceAsync(new DeleteSpaceCommand(request.UserId, request.SpaceId));
+        var command = new DeleteSpaceCommand(
+            new UserId(Guid.Parse(request.UserId)),
+            new SpaceId(Guid.Parse(request.SpaceId)));
+        
+        var result = await _mediator.Send(command, context.CancellationToken);
 
         if (!result.IsSuccess)
         {
             throw ErrorMapper.ToRpcException(result.Errors[0]);
         }
 
-        return new DeleteSpaceResponse
-        {
-            Success = result.Value.Success
-        };
+        return new DeleteSpaceResponse();
     }
 }

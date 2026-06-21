@@ -4,9 +4,13 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Common -->
+    <PackageVersion Include="Mediator.SourceGenerator" Version="3.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageVersion>
+    <PackageVersion Include="Mediator.Abstractions" Version="3.0.2"/>
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.4" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.4" />
-
     <!-- gRPC packages -->
     <PackageVersion Include="Google.Api.CommonProtos" Version="2.17.0" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.76.0" />
@@ -16,7 +20,6 @@
     <PackageVersion Include="Grpc.Net.Common" Version="2.76.0" />
     <PackageVersion Include="Google.Protobuf" Version="3.31.1" />
     <PackageVersion Include="Grpc.Tools" Version="2.76.0" />
-    
     <!-- Dal -->
     <PackageVersion Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" Version="10.0.6" />
     <PackageVersion Include="Microsoft.AspNetCore.Grpc.Swagger" Version="0.10.6" />
@@ -25,20 +28,15 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.4" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <PackageVersion Include="EFCore.NamingConventions" Version="10.0.1" />
-    
     <!-- Producing -->
     <PackageVersion Include="Confluent.Kafka" Version="2.14.0" />
-
     <!-- Logic -->
     <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.0.0" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.0.0" />
-    
     <!-- Main -->
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.2.0" />
-    
   </ItemGroup>
-  
   <ItemGroup>
     <!-- Test -->
     <PackageVersion Include="coverlet.collector" Version="6.0.3" />

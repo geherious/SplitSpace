@@ -1,5 +1,4 @@
 using SplitSpace.SpaceService.Dal;
-using SplitSpace.SpaceService.Logic;
 using SplitSpace.SpaceService.Producing;
 using SplitSpace.SpaceService.Services;
 
@@ -12,10 +11,14 @@ builder.Services.AddGrpcSwagger();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddMediator(options =>
+{
+    options.ServiceLifetime = ServiceLifetime.Scoped;
+});
+
 builder.Services.AddRepositories();
 builder.Services.AddClientFacades();
 builder.Services.AddProducers();
-builder.Services.AddServices();
 
 builder.WebHost.ConfigureKestrel(options =>
 {

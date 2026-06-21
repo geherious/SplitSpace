@@ -1,4 +1,5 @@
 using SplitSpace.AuthService.Api.UserService;
+using SplitSpace.SpaceService.Domain.Models.Ids;
 
 namespace SplitSpace.SpaceService.Dal.ClientFacades.Implementations;
 
@@ -11,7 +12,7 @@ public class AuthServiceClientFacade : IAuthServiceClientFacade
         _userClient = userClient;
     }
 
-    public async Task<Guid?> UserExistAsync(string email)
+    public async Task<UserId?> UserExistAsync(string email)
     {
         var result = await _userClient.ExistAsync(new ExistRequest{ Email = email });
 
@@ -25,6 +26,6 @@ public class AuthServiceClientFacade : IAuthServiceClientFacade
             throw new ArgumentException($"Invalid user id: {result.UserId}");
         }
         
-        return userId;
+        return new UserId(userId);
     }
 }
