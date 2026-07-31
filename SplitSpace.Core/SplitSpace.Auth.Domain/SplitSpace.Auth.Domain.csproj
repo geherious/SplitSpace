@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    
+
+    <ItemGroup>
+      <ProjectReference Include="..\SplitSpace.SharedKernel\SplitSpace.SharedKernel.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <InternalsVisibleTo Include="SplitSpace.Auth.Dal" />
+    </ItemGroup>
+
+</Project>

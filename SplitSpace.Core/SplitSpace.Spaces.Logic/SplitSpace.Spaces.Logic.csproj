@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SplitSpace.Spaces.Dal\SplitSpace.Spaces.Dal.csproj" />
+    <ProjectReference Include="..\SplitSpace.Spaces.Domain\SplitSpace.Spaces.Domain.csproj" />
+    <ProjectReference Include="..\SplitSpace.SharedKernel\SplitSpace.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

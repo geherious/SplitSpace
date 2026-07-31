@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SplitSpace.Finances.Dal\SplitSpace.Finances.Dal.csproj" />
+    <ProjectReference Include="..\SplitSpace.Finances.Domain\SplitSpace.Finances.Domain.csproj" />
+    <ProjectReference Include="..\SplitSpace.SharedKernel\SplitSpace.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Settlements\" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,240 @@
+syntax = "proto3";
+
+package SplitSpace.Finances;
+
+option csharp_namespace = "SplitSpace.Finances.Api.FinanceService";
+
+import "google/api/annotations.proto";
+import "google/type/money.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+service FinanceService {
+  rpc AddCategory(AddCategoryRequest) returns (AddCategoryResponse) {
+    option (google.api.http) = {
+      post: "/v1/category/add"
+      body: "*"
+    };
+  }
+  rpc GetCategories(GetCategoriesRequest) returns (GetCategoriesResponse) {
+    option (google.api.http) = {
+      post: "/v1/categories"
+      body: "*"
+    };
+  }
+  rpc AddBalance(AddBalanceRequest) returns (AddBalanceResponse) {
+    option (google.api.http) = {
+      post: "/v1/balances/add"
+      body: "*"
+    };
+  }
+  rpc GetSpaceBalances(GetSpaceBalancesRequest) returns (GetSpaceBalancesResponse) {
+    option (google.api.http) = {
+      post: "/v1/balances/space"
+      body: "*"
+    };
+  }
+  rpc GetPersonalBalances(GetPersonalBalancesRequest) returns (GetPersonalBalancesResponse) {
+    option (google.api.http) = {
+      post: "/v1/balances/personal"
+      body: "*"
+    };
+  }
+  rpc AddExpense(AddExpenseRequest) returns (AddExpenseResponse) {
+    option (google.api.http) = {
+      post: "/v1/expense/add"
+      body: "*"
+    };
+  }
+  rpc GetExpenses(GetExpensesRequest) returns (GetExpensesResponse) {
+    option (google.api.http) = {
+      post: "/v1/expenses"
+      body: "*"
+    };
+  }
+  rpc GetDebts(GetDebtsRequest) returns (GetDebtsResponse) {
+    option (google.api.http) = {
+      post: "/v1/debts"
+      body: "*"
+    };
+  }
+  rpc SettleDebt(SettleDebtRequest) returns (SettleDebtResponse) {
+    option (google.api.http) = {
+      post: "/v1/expense/settle"
+      body: "*"
+    };
+  }
+}
+
+message AddCategoryRequest {
+  string space_id = 1;
+  string user_id = 2;
+  string name = 3;
+  google.protobuf.StringValue parent_category_id = 4;
+  optional google.type.Money limit = 5;
+}
+
+message AddCategoryResponse {
+  string category_id = 1;
+}
+
+message GetCategoriesRequest {
+  string space_id = 1;
+  string user_id = 2;
+}
+
+message GetCategoriesResponse {
+  message Category {
+    string category_id = 1;
+    string name = 2;
+    google.protobuf.StringValue parent_category_id = 3;
+    google.type.Money limit = 4;
+  }
+  
+  repeated Category categories = 1;
+}
+
+message AddBalanceRequest {
+  oneof owner {
+    string owner_user_id = 1;
+    string owner_space_id = 2;
+  }
+  string name = 3;
+  google.type.Money balance = 4;
+  string actor_user_id = 5;
+}
+
+message AddBalanceResponse {
+  string balance_id = 1;
+}
+
+message GetSpaceBalancesRequest {
+  string space_id = 1;
+  string user_id = 2;
+}
+
+message GetSpaceBalancesResponse {
+  message Balance {
+    string balance_id = 1;
+    string name = 2;
+    google.type.Money total = 3;
+    string space_id = 4;
+  }
+  
+  repeated Balance balances = 1;
+}
+
+message GetPersonalBalancesRequest {
+  string user_id = 1;
+}
+
+message GetPersonalBalancesResponse {
+  message Balance {
+    string balance_id = 1;
+    string name = 2;
+    google.type.Money total = 3;
+    string user_id = 4;
+  }
+
+  repeated Balance balances = 1;
+}
+
+message AddExpenseRequest {
+  message SplitParticipant {
+    string user_id = 1;
+    google.type.Money amount = 2;
+    double percent = 3;
+  }
+
+  message NoneSplit {
+  }
+
+  message EqualSplit {
+    repeated string user_ids = 1;
+  }
+
+  message ExactSplit {
+    repeated SplitParticipant participants = 1;
+  }
+
+  message PercentageSplit {
+    repeated SplitParticipant participants = 1;
+  }
+
+  message Split {
+    oneof type {
+      NoneSplit none = 1;
+      EqualSplit equal_split = 2;
+      ExactSplit exact_split = 3;
+      PercentageSplit percentage_split = 4;
+    }
+  }
+
+  string space_id = 1;
+  string user_id = 2;
+  string category_id = 3;
+  string balance_id = 4;
+  google.type.Money amount = 5;
+  string description = 6;
+  optional Split split = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message AddExpenseResponse {
+  string expense_id = 1;
+}
+
+message GetExpensesRequest {
+  string space_id = 1;
+  string user_id = 2;
+}
+
+message GetExpensesResponse {
+  message ExpenseSplit {
+    repeated ExpenseSplitItem split_items = 1;
+  }
+  
+  message ExpenseSplitItem {
+    string user_id = 1;
+    google.type.Money amount_to_pay = 2;
+  }
+  
+  message Expense {
+    string expense_id = 1;
+    string category_id = 2;
+    string balance_id = 3;
+    google.type.Money amount = 4;
+    string description = 5;
+    optional ExpenseSplit split = 6;
+  }
+  
+  repeated Expense expenses = 1;
+}
+
+message GetDebtsRequest {
+  string space_id = 1;
+  string user_id = 2;
+}
+
+message GetDebtsResponse {
+  message Debt {
+    string debt_id = 1;
+    string space_id = 2;
+    string from_user_id = 3;
+    string to_user_id = 4;
+    google.type.Money amount = 5;
+  }
+  
+  repeated Debt debts = 1;
+}
+
+message SettleDebtRequest {
+  string space_id = 1;
+  string user_id = 2;
+  string balance_id = 4;
+  google.type.Money amount = 5;
+  string user_to = 6;
+}
+
+message SettleDebtResponse {
+}

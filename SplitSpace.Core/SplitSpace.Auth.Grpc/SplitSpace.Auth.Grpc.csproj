@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>SplitSpace.Auth.Grpc</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" />
+    <PackageReference Include="Google.Api.CommonProtos" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="Protos\SplitSpace\**\*.proto"
+              GrpcServices="Server"
+              AdditionalImportDirs="Protos"/>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <IncludeHttpRuleProtos>true</IncludeHttpRuleProtos>
+  </PropertyGroup>
+
+</Project>

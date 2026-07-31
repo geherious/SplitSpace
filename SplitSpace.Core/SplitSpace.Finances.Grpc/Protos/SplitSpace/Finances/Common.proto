@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package SplitSpace.Finances.Common;
+
+option csharp_namespace = "SplitSpace.Finances.Api.Common";
+
+enum BalanceOwnerType {
+  BALANCE_OWNER_TYPE_UNSPECIFIED = 0;
+  BALANCE_OWNER_TYPE_PERSONAL = 1;
+  BALANCE_OWNER_TYPE_SPACE = 2;
+}

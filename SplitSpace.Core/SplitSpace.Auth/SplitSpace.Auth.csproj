@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SplitSpace.Auth.Logic\SplitSpace.Auth.Logic.csproj" />
+    <ProjectReference Include="..\SplitSpace.Auth.Dal\SplitSpace.Auth.Dal.csproj" />
+    <ProjectReference Include="..\SplitSpace.Auth.Grpc\SplitSpace.Auth.Grpc.csproj" />
+  </ItemGroup>
+
+</Project>

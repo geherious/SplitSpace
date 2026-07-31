@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <ItemGroup>
-    <ProjectReference Include="..\SplitSpace.FinanceService.Dal\SplitSpace.FinanceService.Dal.csproj" />
-  </ItemGroup>
-
-</Project>

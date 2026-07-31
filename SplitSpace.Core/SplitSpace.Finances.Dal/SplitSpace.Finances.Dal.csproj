@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SplitSpace.Finances.Domain\SplitSpace.Finances.Domain.csproj" />
+    <ProjectReference Include="..\SplitSpace.Spaces.Domain\SplitSpace.Spaces.Domain.csproj" />
+    <ProjectReference Include="..\SplitSpace.Spaces.Logic\SplitSpace.Spaces.Logic.csproj" />
+    <ProjectReference Include="..\SplitSpace.SharedKernel\SplitSpace.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Database\Migrations\*.sql" />
+  </ItemGroup>
+
+</Project>
