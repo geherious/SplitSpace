@@ -9,12 +9,12 @@ namespace SplitSpace.Finances.Logic.Features.Expenses.GetExpenses;
 
 public class GetExpensesHandler : IQueryHandler<GetExpensesCommand, Result<GetExpensesResultData>>
 {
-    private readonly IExpenseRepository _expenseRepository;
+    private readonly IExpenseReadRepository _expenseReadRepository;
     private readonly ISpacesServiceClientFacade _spacesServiceClientFacade;
 
-    public GetExpensesHandler(IExpenseRepository expenseRepository, ISpacesServiceClientFacade spacesServiceClientFacade)
+    public GetExpensesHandler(IExpenseReadRepository expenseReadRepository, ISpacesServiceClientFacade spacesServiceClientFacade)
     {
-        _expenseRepository = expenseRepository;
+        _expenseReadRepository = expenseReadRepository;
         _spacesServiceClientFacade = spacesServiceClientFacade;
     }
 
@@ -26,7 +26,7 @@ public class GetExpensesHandler : IQueryHandler<GetExpensesCommand, Result<GetEx
             return Result<GetExpensesResultData>.Failure(new Error(ErrorType.NotFound, "Space not found"));
         }
 
-        var expenseAggregates = await _expenseRepository.GetBatchAsync(command.SpaceId, ct);
+        var expenseAggregates = await _expenseReadRepository.GetBatchAsync(command.SpaceId, ct);
 
         var result = new List<GetExpensesResultData.Expense>(capacity: expenseAggregates.Count);
 
@@ -41,7 +41,7 @@ public class GetExpensesHandler : IQueryHandler<GetExpensesCommand, Result<GetEx
                 {
                     UserId = s.UserId,
                     AmountToPay = s.AmountToPay,
-                    ExpensePercent = Math.Round(s.AmountToPay / aggregate.Expense.Amount, 2)
+                    ExpensePercent = Math.Round(s.AmountToPay / aggregate.ExpenseEntity.Amount, 2)
                 })
                 .ToArray();
 
@@ -52,11 +52,11 @@ public class GetExpensesHandler : IQueryHandler<GetExpensesCommand, Result<GetEx
             }
 
             result.Add(new GetExpensesResultData.Expense(
-                aggregate.Expense.Id,
-                aggregate.Expense.CategoryId,
+                aggregate.ExpenseEntity.Id,
+                aggregate.ExpenseEntity.CategoryId,
                 balanceId,
-                aggregate.Expense.Amount,
-                aggregate.Expense.Description,
+                aggregate.ExpenseEntity.Amount,
+                aggregate.ExpenseEntity.Description,
                 split));
         }
 

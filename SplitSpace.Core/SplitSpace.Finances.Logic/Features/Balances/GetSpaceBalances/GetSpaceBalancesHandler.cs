@@ -1,18 +1,19 @@
 using Mediator;
 using SplitSpace.Finances.Dal.ClientFacades;
 using SplitSpace.Finances.Dal.Database.Repositories;
+using SplitSpace.Finances.Dal.Database.Repositories.ReadRepositoriesAbstractions;
 using SplitSpace.SharedKernel.Models;
 
 namespace SplitSpace.Finances.Logic.Features.Balances.GetSpaceBalances;
 
 public class GetSpaceBalancesHandler : IQueryHandler<GetSpaceBalancesCommand, Result<GetSpaceBalancesResultData>>
 {
-    private readonly IBalanceRepository _balanceRepository;
+    private readonly IBalanceReadRepository _balanceReadRepository;
     private readonly ISpacesServiceClientFacade _spacesServiceClientFacade;
 
-    public GetSpaceBalancesHandler(IBalanceRepository balanceRepository, ISpacesServiceClientFacade spacesServiceClientFacade)
+    public GetSpaceBalancesHandler(IBalanceReadRepository balanceReadRepository, ISpacesServiceClientFacade spacesServiceClientFacade)
     {
-        _balanceRepository = balanceRepository;
+        _balanceReadRepository = balanceReadRepository;
         _spacesServiceClientFacade = spacesServiceClientFacade;
     }
 
@@ -24,7 +25,7 @@ public class GetSpaceBalancesHandler : IQueryHandler<GetSpaceBalancesCommand, Re
             return Result<GetSpaceBalancesResultData>.Failure(new Error(ErrorType.NotFound, "Space not found"));
         }
 
-        var balances = await _balanceRepository.GetSpaceBalanceBatchAsync(command.SpaceId.Value, ct);
+        var balances = await _balanceReadRepository.GetSpaceBalanceBatchAsync(command.SpaceId, ct);
 
         var result = balances
             .Select(a => new GetSpaceBalancesResultData.Balance

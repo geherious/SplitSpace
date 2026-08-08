@@ -99,7 +99,9 @@ public partial class DatabaseMigrator
         using var reader = new StreamReader(stream);
         var content = reader.ReadToEnd();
 
-        var fileName = Path.GetFileNameWithoutExtension(resourceName);
+        const string migrationsMarker = ".Migrations.";
+        var migrationsIndex = resourceName.LastIndexOf(migrationsMarker, StringComparison.Ordinal) + migrationsMarker.Length;
+        var fileName = Path.GetFileNameWithoutExtension(resourceName[migrationsIndex..]);
         var versionMatch = VersionRegex().Match(fileName);
         var description = fileName[versionMatch.Length..].TrimStart('_');
 

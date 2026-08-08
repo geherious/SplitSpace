@@ -3,6 +3,7 @@ using Npgsql;
 using SplitSpace.Finances.Dal.Database.Connections;
 using SplitSpace.Finances.Dal.Database.Entities;
 using SplitSpace.Finances.Domain.Models.Aggregates.CategoryAggregate;
+using SplitSpace.Finances.Domain.Models.Events;
 using SplitSpace.Finances.Domain.Models.Ids;
 
 namespace SplitSpace.Finances.Dal.Database.Repositories.Implementations;
@@ -25,29 +26,59 @@ public class CategoryDomainRepository : ICategoryDomainRepository
 
     public async Task SaveAsync(Category category, CancellationToken ct)
     {
+        if (_transaction is not null)
+        {
+            await ApplyEventsAsync(_transaction, category);
+            return;
+        }
+
+        await using var connection = await _connectionFactory.CreateAsync(ct);
+        await using var transaction = await connection.BeginTransactionAsync(ct);
+        try
+        {
+            await ApplyEventsAsync(transaction, category);
+            await transaction.CommitAsync(ct);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(ct);
+            throw;
+        }
+    }
+
+    private static async Task ApplyEventsAsync(NpgsqlTransaction transaction, Category category)
+    {
+        foreach (var domainEvent in category.DomainEvents)
+        {
+            switch (domainEvent)
+            {
+                case CategoryCreatedEvent e:
+                    await OnCategoryCreatedAsync(transaction, e);
+                    break;
+            }
+        }
+        
+        category.ClearDomainEvents();
+    }
+
+    private static async Task OnCategoryCreatedAsync(NpgsqlTransaction transaction, CategoryCreatedEvent e)
+    {
         const string sql =
             """
-            INSERT INTO category (id, space_id, name, parent_id, limit)
+            INSERT INTO category (id, space_id, name, parent_id, "limit")
             VALUES (@Id, @SpaceId, @Name, @ParentId, @Limit)
             """;
 
         var parameters = new
         {
-            Id = category.Id.Value,
-            SpaceId = category.SpaceId.Value,
-            category.Name,
-            category.ParentId,
-            category.Limit
+            Id = e.Category.Id.Value,
+            SpaceId = e.Category.SpaceId.Value,
+            e.Category.Name,
+            e.Category.ParentId,
+            e.Category.Limit
         };
 
-        if (_transaction is not null)
-        {
-            await _transaction.Connection!.ExecuteAsync(sql, parameters, _transaction);
-            return;
-        }
-
-        await using var connection = await _connectionFactory.CreateAsync(ct);
-        await connection.ExecuteAsync(sql, parameters);
+        await transaction.Connection!.ExecuteAsync(sql, parameters, transaction);
     }
 
     public async Task<Category?> GetAsync(CategoryId categoryId, CancellationToken ct)
@@ -59,7 +90,7 @@ public class CategoryDomainRepository : ICategoryDomainRepository
                 space_id AS SpaceId,
                 name,
                 parent_id AS ParentId,
-                limit
+                "limit"
             FROM category
             WHERE id = @Id
             """;
@@ -74,31 +105,6 @@ public class CategoryDomainRepository : ICategoryDomainRepository
         await using var connection = await _connectionFactory.CreateAsync(ct);
         var result = await connection.QuerySingleOrDefaultAsync<CategoryEntity>(sql, new { Id = categoryId.Value });
         return result is null ? null : Map(result);
-    }
-
-    public async Task<IReadOnlyCollection<Category>> GetBatchAsync(SpaceId spaceId, CancellationToken ct)
-    {
-        const string sql =
-            """
-            SELECT
-                id,
-                space_id AS SpaceId,
-                name,
-                parent_id AS ParentId,
-                limit
-            FROM category
-            WHERE space_id = @SpaceId
-            """;
-
-        if (_transaction is not null)
-        {
-            var entities = (await _transaction.Connection!.QueryAsync<CategoryEntity>(sql, new { SpaceId = spaceId.Value }, _transaction)).ToArray();
-            return entities.Select(Map).ToArray();
-        }
-
-        await using var connection = await _connectionFactory.CreateAsync(ct);
-        var result = (await connection.QueryAsync<CategoryEntity>(sql, new { SpaceId = spaceId.Value })).ToArray();
-        return result.Select(Map).ToArray();
     }
 
     private static Category Map(CategoryEntity entity)

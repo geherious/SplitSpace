@@ -1,7 +1,11 @@
+using Dapper;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using SplitSpace.Auth;
 using SplitSpace.Finances;
+using SplitSpace.SharedKernel.Database;
 using SplitSpace.Spaces;
+using SplitSpace.SharedKernel.Domain.Models;
+using SplitSpace.SharedKernel.Domain;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +22,8 @@ builder.Services.AddMediator(options =>
 {
     options.ServiceLifetime = ServiceLifetime.Scoped;
 });
+
+SqlMapper.AddTypeHandler(new DateTimeOffsetHandler());
 
 AuthModule.Add(builder.Services, builder.Configuration);
 FinancesModule.Add(builder.Services);
@@ -45,3 +51,7 @@ await FinancesModule.RunMigrations(app.Services);
 await SpacesModule.RunMigrations(app.Services);
 
 app.Run();
+
+public partial class Program
+{
+}

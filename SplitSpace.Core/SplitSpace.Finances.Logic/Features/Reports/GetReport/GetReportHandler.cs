@@ -8,12 +8,12 @@ namespace SplitSpace.Finances.Logic.Features.Reports.GetReport;
 
 public class GetReportHandler : IQueryHandler<GetReportCommand, Result<GetReportResultData>>
 {
-    private readonly IExpenseRepository _expenseRepository;
+    private readonly IExpenseReadRepository _expenseReadRepository;
     private readonly ISpacesServiceClientFacade _spacesServiceClientFacade;
 
-    public GetReportHandler(IExpenseRepository expenseRepository, ISpacesServiceClientFacade spacesServiceClientFacade)
+    public GetReportHandler(IExpenseReadRepository expenseReadRepository, ISpacesServiceClientFacade spacesServiceClientFacade)
     {
-        _expenseRepository = expenseRepository;
+        _expenseReadRepository = expenseReadRepository;
         _spacesServiceClientFacade = spacesServiceClientFacade;
     }
 
@@ -25,7 +25,7 @@ public class GetReportHandler : IQueryHandler<GetReportCommand, Result<GetReport
             return Result<GetReportResultData>.Failure(new Error(ErrorType.NotFound, "Space not found"));
         }
 
-        var aggregate = await _expenseRepository.GetGroupedByCategory(
+        var aggregate = await _expenseReadRepository.GetGroupedByCategory(
             command.SpaceId,
             command.DateFrom.ToUniversalTime(),
             command.DateTo.ToUniversalTime(),

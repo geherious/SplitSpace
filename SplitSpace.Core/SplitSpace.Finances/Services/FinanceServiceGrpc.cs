@@ -144,7 +144,7 @@ public class FinanceServiceGrpc : FinanceService.FinanceServiceBase
     {
         var userId = request.UserId.ToGuidOrThrow(nameof(request.UserId));
 
-        var result = await _mediator.Send(new GetPersonalBalancesCommand(userId), context.CancellationToken);
+        var result = await _mediator.Send(new GetPersonalBalancesCommand(new UserId(userId)), context.CancellationToken);
 
         if (!result.IsSuccess)
         {

@@ -65,8 +65,7 @@ public class UserDomainRepository : BaseRepository, IUserDomainRepository
     {
         if (_transaction is not null)
         {
-            await ProcessEventsAsync(user, _transaction);
-            user.ClearDomainEvents();
+            await ApplyEventsAsync(user, _transaction);
             return;
         }
 
@@ -74,8 +73,7 @@ public class UserDomainRepository : BaseRepository, IUserDomainRepository
         await using var tx = await connection.BeginTransactionAsync(cancellationToken);
         try
         {
-            await ProcessEventsAsync(user, tx);
-            user.ClearDomainEvents();
+            await ApplyEventsAsync(user, tx);
             await tx.CommitAsync(cancellationToken);
         }
         catch
@@ -85,32 +83,35 @@ public class UserDomainRepository : BaseRepository, IUserDomainRepository
         }
     }
 
-    private static async Task ProcessEventsAsync(User user, IDbTransaction transaction)
+    private static async Task ApplyEventsAsync(User user, IDbTransaction transaction)
     {
-        var connection = transaction.Connection!;
-
         foreach (var domainEvent in user.DomainEvents)
         {
             switch (domainEvent)
             {
                 case UserCreatedEvent e:
-                    await connection.ExecuteAsync(
-                        """
-                        INSERT INTO "user" (id, email, password_hash, created_at, last_login)
-                        VALUES (@Id, @Email, @PasswordHash, @CreatedAt, @LastLogin)
-                        """,
-                        new
-                        {
-                            Id = e.User.Id.Value,
-                            Email = e.User.Email.Value,
-                            PasswordHash = e.User.PasswordHash.Value,
-                            CreatedAt = e.User.CreatedAt,
-                            LastLogin = e.User.LastLogin
-                        },
-                        transaction);
+                    await OnUserCreatedAsync(e, transaction);
                     break;
             }
         }
+    }
+
+    private static async Task OnUserCreatedAsync(UserCreatedEvent e, IDbTransaction transaction)
+    {
+        await transaction.Connection!.ExecuteAsync(
+            """
+            INSERT INTO "user" (id, email, password_hash, created_at, last_login)
+            VALUES (@Id, @Email, @PasswordHash, @CreatedAt, @LastLogin)
+            """,
+            new
+            {
+                Id = e.User.Id.Value,
+                Email = e.User.Email.Value,
+                PasswordHash = e.User.PasswordHash.Value,
+                CreatedAt = e.User.CreatedAt,
+                LastLogin = e.User.LastLogin
+            },
+            transaction);
     }
 
     private static User ToDomain(UserEntity entity)

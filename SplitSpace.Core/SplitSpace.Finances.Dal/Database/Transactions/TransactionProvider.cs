@@ -63,12 +63,13 @@ public class TransactionProvider : ITransactionProvider
         public ITransactionContext.RepositoryRegistry Repositories =>
             new()
             {
-                BalanceRepository = new BalanceRepository(_connectionFactory, _transaction),
+                BalanceReadRepository = new BalanceReadRepository(_connectionFactory, _transaction),
                 CategoryRepository = new CategoryDomainRepository(_connectionFactory, _transaction),
-                DebtRepository = new DebtRepository(_connectionFactory, _transaction),
-                ExpenseRepository = new ExpenseRepository(_connectionFactory, _transaction),
-                ExpenseSplitRepository = new ExpenseSplitRepository(_connectionFactory, _transaction),
-                SettlementRepository = new SettlementRepository(_connectionFactory, _transaction)
+                DebtReadRepository = new DebtReadRepository(_connectionFactory, _transaction),
+                ExpenseReadRepository = new ExpenseReadRepository(_connectionFactory, _transaction),
+                BalanceDomainRepository = new BalanceDomainRepository(_connectionFactory, _transaction),
+                DebtDomainRepository = new DebtDomainRepository(_connectionFactory, _transaction),
+                SettlementDomainRepository = new SettlementDomainRepository(_connectionFactory, _transaction)
             };
     }
 }

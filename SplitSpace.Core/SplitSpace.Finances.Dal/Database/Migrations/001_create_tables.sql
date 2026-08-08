@@ -2,9 +2,10 @@
 CREATE TABLE IF NOT EXISTS balance (
     id          uuid            PRIMARY KEY,
     name        text            NOT NULL,
-    balance     numeric(18,2)   NOT NULL,
+    total       numeric(18,2)   NOT NULL,
     owner_type  text            NOT NULL,
-    owner_id    uuid            NOT NULL
+    owner_id    uuid            NOT NULL,
+    created_by  uuid            NOT NUll
 );
 
 CREATE TABLE IF NOT EXISTS category (
@@ -12,7 +13,7 @@ CREATE TABLE IF NOT EXISTS category (
     space_id    uuid            NOT NULL,
     name        text            NOT NULL,
     parent_id   uuid            REFERENCES category(id) ON DELETE CASCADE,
-    limit       numeric(18,2)
+    "limit"     numeric(18,2)
 );
 
 CREATE TABLE IF NOT EXISTS debt (

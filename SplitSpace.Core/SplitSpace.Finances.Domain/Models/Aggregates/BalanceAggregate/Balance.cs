@@ -1,3 +1,4 @@
+using SplitSpace.Finances.Domain.Models.Events;
 using SplitSpace.Finances.Domain.Models.Ids;
 using SplitSpace.Finances.Domain.Models.ValueObjects;
 using SplitSpace.SharedKernel.Domain.Models;
@@ -67,24 +68,32 @@ public sealed record Balance : AggregateRoot<BalanceId>
             return Result<Balance>.Failure(new Error(ErrorType.FailedPrecondition, "Owner id should equal the user id"));
         }
 
-        return Result.Success(new Balance(
+        var balance = new Balance(
             BalanceId.New(),
             name,
             total: new Money(0),
             BalanceOwnerType.Personal,
             ownerId.Value,
-            createdBy.Value));
+            createdBy.Value);
+
+        balance.AddDomainEvent(new BalanceCreatedEvent(balance));
+
+        return Result.Success(balance);
     }
     
     public static Balance CreateSpace(string name, SpaceId spaceId, UserId createdBy)
     {
-        return new Balance(
+        var balance = new Balance(
             BalanceId.New(),
             name,
             total: new Money(0),
             BalanceOwnerType.Space,
             spaceId.Value,
             createdBy.Value);
+
+        balance.AddDomainEvent(new BalanceCreatedEvent(balance));
+
+        return balance;
     }
 
     public bool IsOwnedByUser(UserId userId)
@@ -101,6 +110,7 @@ public sealed record Balance : AggregateRoot<BalanceId>
     {
         Total = new Money(entry.Total.Amount);
         _entries.Add(entry);
+        AddDomainEvent(new BalanceAmountChangedEvent(this, entry));
         return Result.Success();
     }
 }

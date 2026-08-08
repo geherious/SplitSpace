@@ -1,3 +1,4 @@
+using SplitSpace.Finances.Domain.Models.Events;
 using SplitSpace.Finances.Domain.Models.Ids;
 using SplitSpace.SharedKernel.Domain.Models;
 using SplitSpace.SharedKernel.Models;
@@ -58,11 +59,15 @@ public sealed record Category : AggregateRoot<CategoryId>
             return Result<Category>.Failure(new Error(ErrorType.FailedPrecondition, "Parent category already has parent."));
         }
 
-        return Result.Success(new Category(
+        var category = new Category(
             CategoryId.New(),
             spaceId,
             name,
             parent?.ParentId,
-            limit));
+            limit);
+
+        category.AddDomainEvent(new CategoryCreatedEvent(category));
+
+        return Result.Success(category);
     }
 }

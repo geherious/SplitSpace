@@ -1,3 +1,4 @@
+using SplitSpace.Finances.Domain.Models.Events;
 using SplitSpace.Finances.Domain.Models.Ids;
 using SplitSpace.Finances.Domain.Models.ValueObjects;
 using SplitSpace.SharedKernel.Domain.Models;
@@ -20,22 +21,22 @@ public sealed record Debt : AggregateRoot<DebtId>
 
     public IReadOnlyList<DebtEntry> Entries => _entries;
 
-    private Debt(DebtId id, SpaceId spaceId, UserId fromUserId, UserId toUserId, Money amount)
+    private Debt(DebtId id, SpaceId spaceId, UserId fromUserId, UserId toUserId)
     {
-        var (from, to, normalizedAmount) = Normalize(fromUserId, toUserId, amount);
+        var (from, to, _) = Normalize(fromUserId, toUserId, new Money(0));
 
         Id = id;
         SpaceId = spaceId;
         FromUserId = from;
         ToUserId = to;
-        Total = normalizedAmount;
+        Total = new Money(0);
     }
     
     private Debt() {}
     
-    public static Debt Create(SpaceId spaceId, UserId fromUserId, UserId toUserId, Money amount)
+    public static Debt Create(SpaceId spaceId, UserId fromUserId, UserId toUserId)
     {
-        return new Debt(DebtId.New(), spaceId, fromUserId, toUserId, amount);
+        return new Debt(DebtId.New(), spaceId, fromUserId, toUserId);
     }
 
     public static Debt Rehydrate(DebtId id, SpaceId spaceId, UserId fromUserId, UserId toUserId, Money amount)
@@ -60,6 +61,7 @@ public sealed record Debt : AggregateRoot<DebtId>
             Total += normalizedAmount;
 
         _entries.Add(entry);
+        AddDomainEvent(new DebtEntryAddedEvent(this, entry));
     }
     
     private static (UserId From, UserId To, Money Amount) Normalize(UserId a, UserId b, Money amount)

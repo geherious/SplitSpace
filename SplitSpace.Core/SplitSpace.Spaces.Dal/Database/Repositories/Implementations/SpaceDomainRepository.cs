@@ -82,7 +82,6 @@ public class SpaceDomainRepository : ISpaceDomainRepository
         if (_transaction is not null)
         {
             await ProcessEventsAsync(space, _transaction);
-            space.ClearDomainEvents();
             return;
         }
 
@@ -91,7 +90,6 @@ public class SpaceDomainRepository : ISpaceDomainRepository
         try
         {
             await ProcessEventsAsync(space, tx);
-            space.ClearDomainEvents();
             await tx.CommitAsync(ct);
         }
         catch
@@ -144,5 +142,7 @@ public class SpaceDomainRepository : ISpaceDomainRepository
                     break;
             }
         }
+
+        space.ClearDomainEvents();
     }
 }

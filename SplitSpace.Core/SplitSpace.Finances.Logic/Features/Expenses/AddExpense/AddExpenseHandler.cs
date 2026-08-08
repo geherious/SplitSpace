@@ -71,15 +71,17 @@ public class AddExpenseHandler : ICommandHandler<AddExpenseCommand, Result<AddEx
             return Result<AddExpenseResultData>.Failure(createdExpense.Errors);
         }
 
-        await _expenseDomainRepository.SaveAsync(createdExpense.ResultValue, ct);
-        
-        foreach (var domainEvent in createdExpense.ResultValue.DomainEvents)
+        var expense = createdExpense.ResultValue;
+        var domainEvents = expense.DomainEvents.ToArray();
+
+        await _expenseDomainRepository.SaveAsync(expense, ct);
+
+        foreach (var domainEvent in domainEvents)
         {
             await _mediator.Publish(domainEvent, ct);
         }
-        createdExpense.ResultValue.ClearDomainEvents();
 
-        return Result<AddExpenseResultData>.Success(new AddExpenseResultData(createdExpense.ResultValue.Id));
+        return Result<AddExpenseResultData>.Success(new AddExpenseResultData(expense.Id));
     }
 
     private static IExpenseSplitPolicy GetPolicy(ExpenseSplitMethod splitMethod)

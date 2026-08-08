@@ -2,6 +2,7 @@ using Dapper;
 using Npgsql;
 using SplitSpace.Finances.Dal.Database.Connections;
 using SplitSpace.Finances.Domain.Models.Aggregates.DebtAggregate;
+using SplitSpace.Finances.Domain.Models.Events;
 using SplitSpace.Finances.Domain.Models.Ids;
 using SplitSpace.Finances.Domain.Models.ValueObjects;
 
@@ -25,7 +26,44 @@ public class DebtDomainRepository : IDebtDomainRepository
 
     public async Task SaveAsync(Debt debt, CancellationToken cancellationToken)
     {
-        const string sql =
+        if (_transaction is not null)
+        {
+            await ApplyEventsAsync(_transaction, debt, cancellationToken);
+            return;
+        }
+
+        await using var connection = await _connectionFactory.CreateAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await ApplyEventsAsync(transaction, debt, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    private static async Task ApplyEventsAsync(NpgsqlTransaction transaction, Debt debt, CancellationToken cancellationToken)
+    {
+        foreach (var domainEvent in debt.DomainEvents)
+        {
+            switch (domainEvent)
+            {
+                case DebtEntryAddedEvent e:
+                    await OnDebtEntryAddedAsync(transaction, e);
+                    break;
+            }
+        }
+        
+        debt.ClearDomainEvents();
+    }
+
+    private static async Task OnDebtEntryAddedAsync(NpgsqlTransaction transaction, DebtEntryAddedEvent e)
+    {
+        const string upsertSql =
             """
             INSERT INTO debt (id, space_id, from_user_id, to_user_id, amount)
             VALUES (@Id, @SpaceId, @FromUserId, @ToUserId, @Amount)
@@ -33,70 +71,40 @@ public class DebtDomainRepository : IDebtDomainRepository
                 amount = EXCLUDED.amount
             """;
 
-        var parameters = new
-        {
-            Id = debt.Id.Value,
-            SpaceId = debt.SpaceId.Value,
-            FromUserId = debt.FromUserId.Value,
-            ToUserId = debt.ToUserId.Value,
-            Amount = debt.Total.Amount
-        };
-
-        if (_transaction is not null)
-        {
-            await _transaction.Connection!.ExecuteAsync(sql, parameters, _transaction);
-        }
-        else
-        {
-            await using var connection = await _connectionFactory.CreateAsync(cancellationToken);
-            await connection.ExecuteAsync(sql, parameters);
-        }
-
-        if (debt.Entries.Count > 0)
-        {
-            await SaveEntriesAsync(debt, cancellationToken);
-        }
-    }
-
-    private async Task SaveEntriesAsync(Debt debt, CancellationToken cancellationToken)
-    {
-        const string sql =
+        const string insertEntrySql =
             """
             INSERT INTO debt_entry (id, debt_id, owned_by, owned_to, total, source_type, expense_id, split_id)
             VALUES (@Id, @DebtId, @OwnedBy, @OwnedTo, @Total, @SourceType, @ExpenseId, @SplitId)
             ON CONFLICT (debt_id, source_type, expense_id, split_id) DO NOTHING
             """;
 
-        var parameters = debt.Entries.Select(entry =>
-        {
-            var expenseSource = entry.Source as DebtEntry.DebtEntrySource.ExpenseSplit;
-            return new
-            {
-                Id = entry.Id.Value,
-                DebtId = entry.DebtId.Value,
-                OwnedBy = entry.OwnedBy.Value,
-                OwnedTo = entry.OwnedTo.Value,
-                Total = entry.Total.Amount,
-                SourceType = expenseSource is null ? "none" : "expense_split",
-                ExpenseId = expenseSource?.ExpenseId.Value,
-                SplitId = expenseSource?.SplitId.Value
-            };
-        });
+        var connection = transaction.Connection!;
 
-        if (_transaction is not null)
+        var debtParameters = new
         {
-            foreach (var parameter in parameters)
-            {
-                await _transaction.Connection!.ExecuteAsync(sql, parameter, _transaction);
-            }
-            return;
-        }
+            Id = e.Debt.Id.Value,
+            SpaceId = e.Debt.SpaceId.Value,
+            FromUserId = e.Debt.FromUserId.Value,
+            ToUserId = e.Debt.ToUserId.Value,
+            Amount = e.Debt.Total.Amount
+        };
 
-        await using var connection = await _connectionFactory.CreateAsync(cancellationToken);
-        foreach (var parameter in parameters)
+        await connection.ExecuteAsync(upsertSql, debtParameters, transaction);
+
+        var expenseSource = e.Entry.Source as DebtEntry.DebtEntrySource.ExpenseSplit;
+        var entryParameters = new
         {
-            await connection.ExecuteAsync(sql, parameter);
-        }
+            Id = e.Entry.Id.Value,
+            DebtId = e.Entry.DebtId.Value,
+            OwnedBy = e.Entry.OwnedBy.Value,
+            OwnedTo = e.Entry.OwnedTo.Value,
+            Total = e.Entry.Total.Amount,
+            SourceType = expenseSource is null ? "none" : "expense_split",
+            ExpenseId = expenseSource?.ExpenseId.Value,
+            SplitId = expenseSource?.SplitId.Value
+        };
+
+        await connection.ExecuteAsync(insertEntrySql, entryParameters, transaction);
     }
 
     public async Task<Debt> GetOrCreate(Debt debt, CancellationToken cancellationToken)
@@ -122,17 +130,17 @@ public class DebtDomainRepository : IDebtDomainRepository
 
         if (_transaction is not null)
         {
-            var entity = await _transaction.Connection!.QuerySingleOrDefaultAsync<Entities.Debt>(
+            var entity = await _transaction.Connection!.QuerySingleOrDefaultAsync<Entities.DebtEntity>(
                 sql, parameters, _transaction);
             return entity is null ? debt : Map(entity);
         }
 
         await using var connection = await _connectionFactory.CreateAsync(cancellationToken);
-        var result = await connection.QuerySingleOrDefaultAsync<Entities.Debt>(sql, parameters);
+        var result = await connection.QuerySingleOrDefaultAsync<Entities.DebtEntity>(sql, parameters);
         return result is null ? debt : Map(result);
     }
 
-    private static Debt Map(Entities.Debt entity)
+    private static Debt Map(Entities.DebtEntity entity)
     {
         return Debt.Rehydrate(
             new DebtId(entity.Id),

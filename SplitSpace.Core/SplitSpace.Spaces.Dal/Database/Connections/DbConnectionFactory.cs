@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Npgsql;
 using SplitSpace.SharedKernel.Database.Connections;
 
@@ -7,10 +8,10 @@ public class DbConnectionFactory : ISpaceDbConnectionFactory
 {
     private readonly string _connectionString;
 
-    public DbConnectionFactory()
+    public DbConnectionFactory(IConfiguration configuration)
     {
-        _connectionString = Environment.GetEnvironmentVariable("SPACE_SERVICE_DB_CONNECTION_STRING")
-            ?? "Host=localhost;Database=space_db;Username=postgres;Password=postgres";
+        _connectionString = configuration.GetConnectionString("SpaceServiceDb")
+            ?? throw new InvalidOperationException("Connection string 'SpaceServiceDb' is not configured.");
     }
 
     public async Task<NpgsqlConnection> CreateAsync(CancellationToken ct = default)

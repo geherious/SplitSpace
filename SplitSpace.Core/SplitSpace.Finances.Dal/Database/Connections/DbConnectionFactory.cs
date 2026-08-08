@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Npgsql;
 
 namespace SplitSpace.Finances.Dal.Database.Connections;
@@ -6,10 +7,10 @@ public class DbConnectionFactory : IFinanceDbConnectionFactory
 {
     private readonly string _connectionString;
 
-    public DbConnectionFactory()
+    public DbConnectionFactory(IConfiguration configuration)
     {
-        _connectionString = Environment.GetEnvironmentVariable("FINANCE_SERVICE_DB_CONNECTION_STRING")
-            ?? "Host=localhost;Database=finance_db;Username=postgres;Password=postgres";
+        _connectionString = configuration.GetConnectionString("FinanceServiceDb")
+            ?? throw new InvalidOperationException("Connection string 'FinanceServiceDb' is not configured.");
     }
 
     public async Task<NpgsqlConnection> CreateAsync(CancellationToken ct = default)

@@ -30,8 +30,7 @@ public class RefreshTokenDomainRepository : BaseRepository, IRefreshTokenDomainR
         {
             foreach (var refreshToken in refreshTokens)
             {
-                await ProcessEventsAsync(refreshToken, _transaction);
-                refreshToken.ClearDomainEvents();
+                await ApplyEventsAsync(refreshToken, _transaction);
             }
             return;
         }
@@ -42,8 +41,7 @@ public class RefreshTokenDomainRepository : BaseRepository, IRefreshTokenDomainR
         {
             foreach (var refreshToken in refreshTokens)
             {
-                await ProcessEventsAsync(refreshToken, tx);
-                refreshToken.ClearDomainEvents();
+                await ApplyEventsAsync(refreshToken, tx);
             }
             await tx.CommitAsync(cancellationToken);
         }
@@ -87,43 +85,51 @@ public class RefreshTokenDomainRepository : BaseRepository, IRefreshTokenDomainR
             entity.CreatedAt);
     }
 
-    private static async Task ProcessEventsAsync(RefreshToken refreshToken, IDbTransaction transaction)
+    private static async Task ApplyEventsAsync(RefreshToken refreshToken, IDbTransaction transaction)
     {
-        var connection = transaction.Connection!;
-
         foreach (var domainEvent in refreshToken.DomainEvents)
         {
             switch (domainEvent)
             {
                 case RefreshTokenCreatedEvent e:
-                    await connection.ExecuteAsync(
-                        """
-                        INSERT INTO refresh_token (id, user_id, token, expires_at, revoked_at, created_at)
-                        VALUES (@Id, @UserId, @Token, @ExpiresAt, @RevokedAt, @CreatedAt)
-                        """,
-                        new
-                        {
-                            Id = e.RefreshToken.Id.Value,
-                            UserId = e.RefreshToken.UserId.Value,
-                            Token = e.RefreshToken.Token.Value,
-                            ExpiresAt = e.RefreshToken.ExpiresAt,
-                            RevokedAt = e.RefreshToken.RevokedAt,
-                            CreatedAt = e.RefreshToken.CreatedAt
-                        },
-                        transaction);
+                    await OnRefreshTokenCreatedAsync(e, transaction);
                     break;
 
                 case RefreshTokenRevokedEvent e:
-                    await connection.ExecuteAsync(
-                        "UPDATE refresh_token SET revoked_at = @RevokedAt WHERE id = @Id",
-                        new
-                        {
-                            Id = e.RefreshToken.Id.Value,
-                            RevokedAt = e.RefreshToken.RevokedAt
-                        },
-                        transaction);
+                    await OnRefreshTokenRevokedAsync(e, transaction);
                     break;
             }
         }
+    }
+
+    private static async Task OnRefreshTokenCreatedAsync(RefreshTokenCreatedEvent e, IDbTransaction transaction)
+    {
+        await transaction.Connection!.ExecuteAsync(
+            """
+            INSERT INTO refresh_token (id, user_id, token, expires_at, revoked_at, created_at)
+            VALUES (@Id, @UserId, @Token, @ExpiresAt, @RevokedAt, @CreatedAt)
+            """,
+            new
+            {
+                Id = e.RefreshToken.Id.Value,
+                UserId = e.RefreshToken.UserId.Value,
+                Token = e.RefreshToken.Token.Value,
+                ExpiresAt = e.RefreshToken.ExpiresAt,
+                RevokedAt = e.RefreshToken.RevokedAt,
+                CreatedAt = e.RefreshToken.CreatedAt
+            },
+            transaction);
+    }
+
+    private static async Task OnRefreshTokenRevokedAsync(RefreshTokenRevokedEvent e, IDbTransaction transaction)
+    {
+        await transaction.Connection!.ExecuteAsync(
+            "UPDATE refresh_token SET revoked_at = @RevokedAt WHERE id = @Id",
+            new
+            {
+                Id = e.RefreshToken.Id.Value,
+                RevokedAt = e.RefreshToken.RevokedAt
+            },
+            transaction);
     }
 }

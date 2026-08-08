@@ -22,7 +22,7 @@ public class ExpenseCreatedDebtHandler : INotificationHandler<ExpenseCreatedEven
             if (split.UserId == expense.CreatedBy)
                 continue;
             
-            var debtToCreate = Debt.Create(expense.SpaceId, split.UserId, expense.CreatedBy, split.AmountToPay);
+            var debtToCreate = Debt.Create(expense.SpaceId, split.UserId, expense.CreatedBy);
             var existingDebt = await _debtDomainRepository.GetOrCreate(debtToCreate, cancellationToken);
             
             var debtEntry = DebtEntry.Create(

@@ -6,8 +6,4 @@
     <ProjectReference Include="..\SplitSpace.SharedKernel\SplitSpace.SharedKernel.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Features\Settlements\" />
-  </ItemGroup>
-
 </Project>

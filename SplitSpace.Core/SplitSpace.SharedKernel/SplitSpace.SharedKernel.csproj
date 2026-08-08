@@ -4,5 +4,6 @@
         <PackageReference Include="Dapper" />
         <PackageReference Include="Npgsql" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+        <PackageReference Include="Scrutor" />
     </ItemGroup>
 </Project>

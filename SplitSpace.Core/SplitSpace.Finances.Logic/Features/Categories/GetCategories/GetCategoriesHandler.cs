@@ -1,6 +1,6 @@
 using Mediator;
 using SplitSpace.Finances.Dal.ClientFacades;
-using SplitSpace.Finances.Domain.Models.Aggregates.CategoryAggregate;
+using SplitSpace.Finances.Dal.Database.Repositories.ReadRepositoriesAbstractions;
 using SplitSpace.Finances.Domain.Models.Ids;
 using SplitSpace.SharedKernel.Models;
 
@@ -8,12 +8,12 @@ namespace SplitSpace.Finances.Logic.Features.Categories.GetCategories;
 
 public class GetCategoriesHandler : IQueryHandler<GetCategoriesCommand, Result<GetCategoriesResultData>>
 {
-    private readonly ICategoryDomainRepository _categoryDomainRepository;
+    private readonly ICategoryReadRepository _categoryReadRepository;
     private readonly ISpacesServiceClientFacade _spacesServiceClientFacade;
 
-    public GetCategoriesHandler(ICategoryDomainRepository categoryDomainRepository, ISpacesServiceClientFacade spacesServiceClientFacade)
+    public GetCategoriesHandler(ICategoryReadRepository categoryReadRepository, ISpacesServiceClientFacade spacesServiceClientFacade)
     {
-        _categoryDomainRepository = categoryDomainRepository;
+        _categoryReadRepository = categoryReadRepository;
         _spacesServiceClientFacade = spacesServiceClientFacade;
     }
 
@@ -25,7 +25,7 @@ public class GetCategoriesHandler : IQueryHandler<GetCategoriesCommand, Result<G
             return Result<GetCategoriesResultData>.Failure(new Error(ErrorType.NotFound, "Space not found"));
         }
 
-        var categories = await _categoryDomainRepository.GetBatchAsync(command.SpaceId, ct);
+        var categories = await _categoryReadRepository.GetBatchAsync(command.SpaceId, ct);
 
         var result = categories
             .Select(c => new GetCategoriesResultData.Category

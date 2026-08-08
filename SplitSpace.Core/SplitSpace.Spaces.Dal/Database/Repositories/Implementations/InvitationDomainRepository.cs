@@ -62,7 +62,6 @@ public class InvitationDomainRepository : IInvitationDomainRepository
         if (_transaction is not null)
         {
             await ProcessEventsAsync(invitation, _transaction);
-            invitation.ClearDomainEvents();
             return;
         }
 
@@ -71,7 +70,6 @@ public class InvitationDomainRepository : IInvitationDomainRepository
         try
         {
             await ProcessEventsAsync(invitation, tx);
-            invitation.ClearDomainEvents();
             await tx.CommitAsync(ct);
         }
         catch
@@ -123,5 +121,7 @@ public class InvitationDomainRepository : IInvitationDomainRepository
                     break;
             }
         }
+
+        invitation.ClearDomainEvents();
     }
 }

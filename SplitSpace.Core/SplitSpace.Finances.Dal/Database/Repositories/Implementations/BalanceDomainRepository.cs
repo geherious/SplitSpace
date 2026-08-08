@@ -3,6 +3,7 @@ using Npgsql;
 using SplitSpace.Finances.Dal.Database.Connections;
 using SplitSpace.Finances.Dal.Database.Entities;
 using SplitSpace.Finances.Domain.Models.Aggregates.BalanceAggregate;
+using SplitSpace.Finances.Domain.Models.Events;
 using SplitSpace.Finances.Domain.Models.Ids;
 using SplitSpace.Finances.Domain.Models.ValueObjects;
 
@@ -26,76 +27,99 @@ public class BalanceDomainRepository : IBalanceDomainRepository
 
     public async Task SaveAsync(Balance balance, CancellationToken cancellationToken)
     {
+        if (_transaction is not null)
+        {
+            await ApplyEventsAsync(_transaction, balance, cancellationToken);
+            return;
+        }
+
+        await using var connection = await _connectionFactory.CreateAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await ApplyEventsAsync(transaction, balance, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    private static async Task ApplyEventsAsync(NpgsqlTransaction transaction, Balance balance, CancellationToken cancellationToken)
+    {
+        foreach (var domainEvent in balance.DomainEvents)
+        {
+            switch (domainEvent)
+            {
+                case BalanceCreatedEvent e:
+                    await OnBalanceCreatedAsync(transaction, e);
+                    break;
+                case BalanceAmountChangedEvent e:
+                    await OnBalanceAmountChangedAsync(transaction, e);
+                    break;
+            }
+        }
+        
+        balance.ClearDomainEvents();
+    }
+
+    private static async Task OnBalanceCreatedAsync(NpgsqlTransaction transaction, BalanceCreatedEvent e)
+    {
         const string sql =
             """
-            INSERT INTO balance (id, name, balance, owner_type, owner_id, created_by)
-            VALUES (@Id, @Name, @Balance, @OwnerType, @OwnerId, @CreatedBy)
-            ON CONFLICT (id) DO UPDATE SET
-                balance = EXCLUDED.balance
+            INSERT INTO balance (id, name, total, owner_type, owner_id, created_by)
+            VALUES (@Id, @Name, @Total, @OwnerType, @OwnerId, @CreatedBy)
             """;
 
         var parameters = new
         {
-            Id = balance.Id.Value,
-            balance.Name,
-            Balance = balance.Total.Amount,
-            balance.OwnerType,
-            balance.OwnerId,
-            balance.CreatedBy
+            Id = e.Balance.Id.Value,
+            e.Balance.Name,
+            Total = e.Balance.Total.Amount,
+            OwnerType = e.Balance.OwnerType.ToString(),
+            e.Balance.OwnerId,
+            e.Balance.CreatedBy
         };
 
-        if (_transaction is not null)
-        {
-            await _transaction.Connection!.ExecuteAsync(sql, parameters, _transaction);
-        }
-        else
-        {
-            await using var connection = await _connectionFactory.CreateAsync(cancellationToken);
-            await connection.ExecuteAsync(sql, parameters);
-        }
-
-        if (balance.Entries.Count > 0)
-        {
-            await SaveEntriesAsync(balance, cancellationToken);
-        }
+        await transaction.Connection!.ExecuteAsync(sql, parameters, transaction);
     }
 
-    private async Task SaveEntriesAsync(Balance balance, CancellationToken cancellationToken)
+    private static async Task OnBalanceAmountChangedAsync(NpgsqlTransaction transaction, BalanceAmountChangedEvent e)
     {
-        const string sql =
+        const string updateSql =
+            """
+            UPDATE balance
+            SET total = @Total
+            WHERE id = @Id
+            """;
+
+        const string insertEntrySql =
             """
             INSERT INTO balance_entry (id, balance_id, total, source_type, expense_id)
             VALUES (@Id, @BalanceId, @Total, @SourceType, @ExpenseId)
             ON CONFLICT (balance_id, source_type, expense_id) DO NOTHING
             """;
 
-        var parameters = balance.Entries.Select(entry => new
-        {
-            Id = entry.Id.Value,
-            BalanceId = entry.BalanceId.Value,
-            Total = entry.Total.Amount,
-            SourceType = entry.Source switch
-            {
-                BalanceEntry.BalanceEntrySource.Expense => "expense",
-                _ => "none"
-            },
-            ExpenseId = (entry.Source as BalanceEntry.BalanceEntrySource.Expense)?.ExpenseId.Value
-        });
+        var connection = transaction.Connection!;
 
-        if (_transaction is not null)
-        {
-            foreach (var parameter in parameters)
-            {
-                await _transaction.Connection!.ExecuteAsync(sql, parameter, _transaction);
-            }
-            return;
-        }
+        await connection.ExecuteAsync(
+            updateSql,
+            new { Id = e.Balance.Id.Value, Total = e.Balance.Total.Amount },
+            transaction);
 
-        await using var connection = await _connectionFactory.CreateAsync(cancellationToken);
-        foreach (var parameter in parameters)
+        var expenseSource = e.Entry.Source as BalanceEntry.BalanceEntrySource.Expense;
+        var entryParameters = new
         {
-            await connection.ExecuteAsync(sql, parameter);
-        }
+            Id = e.Entry.Id.Value,
+            BalanceId = e.Entry.BalanceId.Value,
+            Total = e.Entry.Total.Amount,
+            SourceType = expenseSource is null ? "none" : "expense",
+            ExpenseId = expenseSource?.ExpenseId.Value
+        };
+
+        await connection.ExecuteAsync(insertEntrySql, entryParameters, transaction);
     }
 
     public async Task<Balance?> GetAsync(BalanceId balanceId, CancellationToken cancellationToken)
@@ -105,7 +129,7 @@ public class BalanceDomainRepository : IBalanceDomainRepository
             SELECT
                 id,
                 name,
-                balance,
+                total,
                 owner_type AS OwnerType,
                 owner_id AS OwnerId,
                 created_by AS CreatedBy

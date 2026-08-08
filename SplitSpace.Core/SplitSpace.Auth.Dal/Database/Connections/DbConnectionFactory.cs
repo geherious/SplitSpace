@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Npgsql;
 
 namespace SplitSpace.Auth.Dal.Database.Connections;
@@ -6,10 +7,10 @@ public class DbConnectionFactory : IAuthDbConnectionFactory
 {
     private readonly string _connectionString;
 
-    public DbConnectionFactory()
+    public DbConnectionFactory(IConfiguration configuration)
     {
-        _connectionString = Environment.GetEnvironmentVariable("AUTH_SERVICE_DB_CONNECTION_STRING")
-            ?? "Host=localhost;Database=auth_db;Username=postgres;Password=postgres";
+        _connectionString = configuration.GetConnectionString("AuthServiceDb")
+            ?? throw new InvalidOperationException("Connection string 'AuthServiceDb' is not configured.");
     }
 
     public async Task<NpgsqlConnection> CreateAsync(CancellationToken ct = default)

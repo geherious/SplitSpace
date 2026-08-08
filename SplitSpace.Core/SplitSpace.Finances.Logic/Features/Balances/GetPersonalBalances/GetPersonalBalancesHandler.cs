@@ -1,21 +1,22 @@
 using Mediator;
 using SplitSpace.Finances.Dal.Database.Repositories;
+using SplitSpace.Finances.Dal.Database.Repositories.ReadRepositoriesAbstractions;
 using SplitSpace.SharedKernel.Models;
 
 namespace SplitSpace.Finances.Logic.Features.Balances.GetPersonalBalances;
 
 public class GetPersonalBalancesHandler : IQueryHandler<GetPersonalBalancesCommand, Result<GetPersonalBalancesResultData>>
 {
-    private readonly IBalanceRepository _balanceRepository;
+    private readonly IBalanceReadRepository _balanceReadRepository;
 
-    public GetPersonalBalancesHandler(IBalanceRepository balanceRepository)
+    public GetPersonalBalancesHandler(IBalanceReadRepository balanceReadRepository)
     {
-        _balanceRepository = balanceRepository;
+        _balanceReadRepository = balanceReadRepository;
     }
 
     public async ValueTask<Result<GetPersonalBalancesResultData>> Handle(GetPersonalBalancesCommand command, CancellationToken ct)
     {
-        var accounts = await _balanceRepository.GetUserbalanceBatchAsync(command.UserId, ct);
+        var accounts = await _balanceReadRepository.GetUserBalanceBatchAsync(command.UserId, ct);
 
         var result = accounts
             .Select(a => new GetPersonalBalancesResultData.Account
